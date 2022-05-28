@@ -10,443 +10,407 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"encoding/xml"
-	"errors"
 	"fmt"
-	"gopkg.in/yaml.v2"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
 	"strings"
-	"time"
 
 	"github.com/deepmap/oapi-codegen/pkg/runtime"
 	openapi_types "github.com/deepmap/oapi-codegen/pkg/types"
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/go-chi/chi/v5"
-	"github.com/labstack/echo/v4"
 )
 
 const (
-Bearer_ApiKeyScopes = "Bearer_ApiKey.Scopes"
-AuthorizationCodeScopes = "authorizationCode.Scopes"
-
+	AuthorizationCodeScopes = "authorizationCode.Scopes"
 )
-
-
-
-
 
 // Defines values for CandidateEmploymentType.
 const (
+	CandidateEmploymentTypeCONTRACTOR CandidateEmploymentType = "CONTRACTOR"
 
-  CandidateEmploymentTypeCONTRACTOR CandidateEmploymentType = "CONTRACTOR"
+	CandidateEmploymentTypeHOURLYFT CandidateEmploymentType = "HOURLY_FT"
 
-  CandidateEmploymentTypeHOURLYFT CandidateEmploymentType = "HOURLY_FT"
+	CandidateEmploymentTypeHOURLYPT CandidateEmploymentType = "HOURLY_PT"
 
-  CandidateEmploymentTypeHOURLYPT CandidateEmploymentType = "HOURLY_PT"
+	CandidateEmploymentTypeSALARIEDFT CandidateEmploymentType = "SALARIED_FT"
 
-  CandidateEmploymentTypeSALARIEDFT CandidateEmploymentType = "SALARIED_FT"
+	CandidateEmploymentTypeSALARIEDPT CandidateEmploymentType = "SALARIED_PT"
 
-  CandidateEmploymentTypeSALARIEDPT CandidateEmploymentType = "SALARIED_PT"
-
-  CandidateEmploymentTypeTEMP CandidateEmploymentType = "TEMP"
-
+	CandidateEmploymentTypeTEMP CandidateEmploymentType = "TEMP"
 )
 
 // Defines values for CandidateSalaryUnit.
 const (
+	CandidateSalaryUnitDAY CandidateSalaryUnit = "DAY"
 
-  CandidateSalaryUnitDAY CandidateSalaryUnit = "DAY"
+	CandidateSalaryUnitHOUR CandidateSalaryUnit = "HOUR"
 
-  CandidateSalaryUnitHOUR CandidateSalaryUnit = "HOUR"
+	CandidateSalaryUnitMONTH CandidateSalaryUnit = "MONTH"
 
-  CandidateSalaryUnitMONTH CandidateSalaryUnit = "MONTH"
+	CandidateSalaryUnitPAYPERIOD CandidateSalaryUnit = "PAY_PERIOD"
 
-  CandidateSalaryUnitPAYPERIOD CandidateSalaryUnit = "PAY_PERIOD"
-
-  CandidateSalaryUnitWEEK CandidateSalaryUnit = "WEEK"
-
+	CandidateSalaryUnitWEEK CandidateSalaryUnit = "WEEK"
 )
 
 // Defines values for CustomFieldsType.
 const (
+	CustomFieldsTypeCURRENCY CustomFieldsType = "CURRENCY"
 
-  CustomFieldsTypeCURRENCY CustomFieldsType = "CURRENCY"
+	CustomFieldsTypeDATE CustomFieldsType = "DATE"
 
-  CustomFieldsTypeDATE CustomFieldsType = "DATE"
+	CustomFieldsTypeFILE CustomFieldsType = "FILE"
 
-  CustomFieldsTypeFILE CustomFieldsType = "FILE"
+	CustomFieldsTypeID CustomFieldsType = "ID"
 
-  CustomFieldsTypeID CustomFieldsType = "ID"
+	CustomFieldsTypeNUMBER CustomFieldsType = "NUMBER"
 
-  CustomFieldsTypeNUMBER CustomFieldsType = "NUMBER"
+	CustomFieldsTypePERCENTAGE CustomFieldsType = "PERCENTAGE"
 
-  CustomFieldsTypePERCENTAGE CustomFieldsType = "PERCENTAGE"
+	CustomFieldsTypeRADIO CustomFieldsType = "RADIO"
 
-  CustomFieldsTypeRADIO CustomFieldsType = "RADIO"
+	CustomFieldsTypeSELECT CustomFieldsType = "SELECT"
 
-  CustomFieldsTypeSELECT CustomFieldsType = "SELECT"
+	CustomFieldsTypeTEXT CustomFieldsType = "TEXT"
 
-  CustomFieldsTypeTEXT CustomFieldsType = "TEXT"
-
-  CustomFieldsTypeTEXTAREA CustomFieldsType = "TEXTAREA"
-
+	CustomFieldsTypeTEXTAREA CustomFieldsType = "TEXTAREA"
 )
 
 // Defines values for EmployeeEmploymentType.
 const (
+	EmployeeEmploymentTypeCONTRACTOR EmployeeEmploymentType = "CONTRACTOR"
 
-  EmployeeEmploymentTypeCONTRACTOR EmployeeEmploymentType = "CONTRACTOR"
+	EmployeeEmploymentTypeHOURLYFT EmployeeEmploymentType = "HOURLY_FT"
 
-  EmployeeEmploymentTypeHOURLYFT EmployeeEmploymentType = "HOURLY_FT"
+	EmployeeEmploymentTypeHOURLYPT EmployeeEmploymentType = "HOURLY_PT"
 
-  EmployeeEmploymentTypeHOURLYPT EmployeeEmploymentType = "HOURLY_PT"
+	EmployeeEmploymentTypeSALARIEDFT EmployeeEmploymentType = "SALARIED_FT"
 
-  EmployeeEmploymentTypeSALARIEDFT EmployeeEmploymentType = "SALARIED_FT"
+	EmployeeEmploymentTypeSALARIEDPT EmployeeEmploymentType = "SALARIED_PT"
 
-  EmployeeEmploymentTypeSALARIEDPT EmployeeEmploymentType = "SALARIED_PT"
-
-  EmployeeEmploymentTypeTEMP EmployeeEmploymentType = "TEMP"
-
+	EmployeeEmploymentTypeTEMP EmployeeEmploymentType = "TEMP"
 )
 
 // Defines values for EmployeeGender.
 const (
+	EmployeeGenderFEMALE EmployeeGender = "FEMALE"
 
-  EmployeeGenderFEMALE EmployeeGender = "FEMALE"
+	EmployeeGenderMALE EmployeeGender = "MALE"
 
-  EmployeeGenderMALE EmployeeGender = "MALE"
-
-  EmployeeGenderNil EmployeeGender = "<nil>"
-
+	EmployeeGenderNil EmployeeGender = "<nil>"
 )
 
 // Defines values for EmployeeIdentifiedGender.
 const (
+	EmployeeIdentifiedGenderFEMALE EmployeeIdentifiedGender = "FEMALE"
 
-  EmployeeIdentifiedGenderFEMALE EmployeeIdentifiedGender = "FEMALE"
+	EmployeeIdentifiedGenderMALE EmployeeIdentifiedGender = "MALE"
 
-  EmployeeIdentifiedGenderMALE EmployeeIdentifiedGender = "MALE"
+	EmployeeIdentifiedGenderNONBINARY EmployeeIdentifiedGender = "NONBINARY"
 
-  EmployeeIdentifiedGenderNONBINARY EmployeeIdentifiedGender = "NONBINARY"
-
-  EmployeeIdentifiedGenderNil EmployeeIdentifiedGender = "<nil>"
-
+	EmployeeIdentifiedGenderNil EmployeeIdentifiedGender = "<nil>"
 )
 
 // Defines values for EmployeeRoleState.
 const (
+	EmployeeRoleStateACCEPTED EmployeeRoleState = "ACCEPTED"
 
-  EmployeeRoleStateACCEPTED EmployeeRoleState = "ACCEPTED"
+	EmployeeRoleStateACTIVE EmployeeRoleState = "ACTIVE"
 
-  EmployeeRoleStateACTIVE EmployeeRoleState = "ACTIVE"
+	EmployeeRoleStateHIRED EmployeeRoleState = "HIRED"
 
-  EmployeeRoleStateHIRED EmployeeRoleState = "HIRED"
+	EmployeeRoleStateINIT EmployeeRoleState = "INIT"
 
-  EmployeeRoleStateINIT EmployeeRoleState = "INIT"
-
-  EmployeeRoleStateTERMINATED EmployeeRoleState = "TERMINATED"
-
+	EmployeeRoleStateTERMINATED EmployeeRoleState = "TERMINATED"
 )
 
 // Defines values for EventEventType.
 const (
+	EventEventTypeACCOUNTPASSWORDCHANGED EventEventType = "ACCOUNT_PASSWORD_CHANGED"
 
-  EventEventTypeACCOUNTPASSWORDCHANGED EventEventType = "ACCOUNT_PASSWORD_CHANGED"
+	EventEventTypeACCOUNTPASSWORDRESET EventEventType = "ACCOUNT_PASSWORD_RESET"
 
-  EventEventTypeACCOUNTPASSWORDRESET EventEventType = "ACCOUNT_PASSWORD_RESET"
+	EventEventTypeEXTERNALACCOUNTCREATE EventEventType = "EXTERNAL_ACCOUNT_CREATE"
 
-  EventEventTypeEXTERNALACCOUNTCREATE EventEventType = "EXTERNAL_ACCOUNT_CREATE"
+	EventEventTypeEXTERNALACCOUNTDELETE EventEventType = "EXTERNAL_ACCOUNT_DELETE"
 
-  EventEventTypeEXTERNALACCOUNTDELETE EventEventType = "EXTERNAL_ACCOUNT_DELETE"
+	EventEventTypeEXTERNALACCOUNTINVITE EventEventType = "EXTERNAL_ACCOUNT_INVITE"
 
-  EventEventTypeEXTERNALACCOUNTINVITE EventEventType = "EXTERNAL_ACCOUNT_INVITE"
+	EventEventTypeEXTERNALACCOUNTPASSWORDRESET EventEventType = "EXTERNAL_ACCOUNT_PASSWORD_RESET"
 
-  EventEventTypeEXTERNALACCOUNTPASSWORDRESET EventEventType = "EXTERNAL_ACCOUNT_PASSWORD_RESET"
+	EventEventTypeEXTERNALACCOUNTSUSPEND EventEventType = "EXTERNAL_ACCOUNT_SUSPEND"
 
-  EventEventTypeEXTERNALACCOUNTSUSPEND EventEventType = "EXTERNAL_ACCOUNT_SUSPEND"
+	EventEventTypeEXTERNALGROUPADD EventEventType = "EXTERNAL_GROUP_ADD"
 
-  EventEventTypeEXTERNALGROUPADD EventEventType = "EXTERNAL_GROUP_ADD"
+	EventEventTypeEXTERNALGROUPMEMBERREMOVE EventEventType = "EXTERNAL_GROUP_MEMBER_REMOVE"
 
-  EventEventTypeEXTERNALGROUPMEMBERREMOVE EventEventType = "EXTERNAL_GROUP_MEMBER_REMOVE"
+	EventEventTypeEXTERNALGROUPREMOVE EventEventType = "EXTERNAL_GROUP_REMOVE"
 
-  EventEventTypeEXTERNALGROUPREMOVE EventEventType = "EXTERNAL_GROUP_REMOVE"
+	EventEventTypeEXTERNALSSOGRANT EventEventType = "EXTERNAL_SSO_GRANT"
 
-  EventEventTypeEXTERNALSSOGRANT EventEventType = "EXTERNAL_SSO_GRANT"
+	EventEventTypeEXTERNALSSOREVOKE EventEventType = "EXTERNAL_SSO_REVOKE"
 
-  EventEventTypeEXTERNALSSOREVOKE EventEventType = "EXTERNAL_SSO_REVOKE"
+	EventEventTypeEXTERNALSSOSIGNIN EventEventType = "EXTERNAL_SSO_SIGNIN"
 
-  EventEventTypeEXTERNALSSOSIGNIN EventEventType = "EXTERNAL_SSO_SIGNIN"
+	EventEventTypeRPASSITEMSHARED EventEventType = "RPASS_ITEM_SHARED"
 
-  EventEventTypeRPASSITEMSHARED EventEventType = "RPASS_ITEM_SHARED"
+	EventEventTypeRPASSITEMUNSHARED EventEventType = "RPASS_ITEM_UNSHARED"
 
-  EventEventTypeRPASSITEMUNSHARED EventEventType = "RPASS_ITEM_UNSHARED"
+	EventEventTypeRPASSITEMUSED EventEventType = "RPASS_ITEM_USED"
 
-  EventEventTypeRPASSITEMUSED EventEventType = "RPASS_ITEM_USED"
+	EventEventTypeTWOFACTORDEVICERESET EventEventType = "TWO_FACTOR_DEVICE_RESET"
 
-  EventEventTypeTWOFACTORDEVICERESET EventEventType = "TWO_FACTOR_DEVICE_RESET"
+	EventEventTypeUSERLOGINFAILED EventEventType = "USER_LOGIN_FAILED"
 
-  EventEventTypeUSERLOGINFAILED EventEventType = "USER_LOGIN_FAILED"
-
-  EventEventTypeUSERLOGINSUCCESS EventEventType = "USER_LOGIN_SUCCESS"
-
+	EventEventTypeUSERLOGINSUCCESS EventEventType = "USER_LOGIN_SUCCESS"
 )
 
 // Defines values for EventInitiatorType.
 const (
+	EventInitiatorTypeEXTERNAL EventInitiatorType = "EXTERNAL"
 
-  EventInitiatorTypeEXTERNAL EventInitiatorType = "EXTERNAL"
+	EventInitiatorTypeROLE EventInitiatorType = "ROLE"
 
-  EventInitiatorTypeROLE EventInitiatorType = "ROLE"
-
-  EventInitiatorTypeSYSTEM EventInitiatorType = "SYSTEM"
-
+	EventInitiatorTypeSYSTEM EventInitiatorType = "SYSTEM"
 )
 
 // Defines values for EventSubjectsType.
 const (
+	EventSubjectsTypeGROUP EventSubjectsType = "GROUP"
 
-  EventSubjectsTypeGROUP EventSubjectsType = "GROUP"
+	EventSubjectsTypeROLE EventSubjectsType = "ROLE"
 
-  EventSubjectsTypeROLE EventSubjectsType = "ROLE"
+	EventSubjectsTypeRPASSITEM EventSubjectsType = "RPASS_ITEM"
 
-  EventSubjectsTypeRPASSITEM EventSubjectsType = "RPASS_ITEM"
+	EventSubjectsTypeSPOKE EventSubjectsType = "SPOKE"
 
-  EventSubjectsTypeSPOKE EventSubjectsType = "SPOKE"
-
-  EventSubjectsTypeSPOKEUSER EventSubjectsType = "SPOKE_USER"
-
+	EventSubjectsTypeSPOKEUSER EventSubjectsType = "SPOKE_USER"
 )
 
 // Defines values for LeaveRequestLeaveType.
 const (
+	LeaveRequestLeaveTypeJURYDUTY LeaveRequestLeaveType = "JURY_DUTY"
 
-  LeaveRequestLeaveTypeJURYDUTY LeaveRequestLeaveType = "JURY_DUTY"
+	LeaveRequestLeaveTypeSICK LeaveRequestLeaveType = "SICK"
 
-  LeaveRequestLeaveTypeSICK LeaveRequestLeaveType = "SICK"
-
-  LeaveRequestLeaveTypeVACATION LeaveRequestLeaveType = "VACATION"
-
+	LeaveRequestLeaveTypeVACATION LeaveRequestLeaveType = "VACATION"
 )
 
 // Defines values for LeaveRequestStatus.
 const (
+	LeaveRequestStatusAPPROVED LeaveRequestStatus = "APPROVED"
 
-  LeaveRequestStatusAPPROVED LeaveRequestStatus = "APPROVED"
+	LeaveRequestStatusCANCELED LeaveRequestStatus = "CANCELED"
 
-  LeaveRequestStatusCANCELED LeaveRequestStatus = "CANCELED"
+	LeaveRequestStatusPENDING LeaveRequestStatus = "PENDING"
 
-  LeaveRequestStatusPENDING LeaveRequestStatus = "PENDING"
-
-  LeaveRequestStatusREJECTED LeaveRequestStatus = "REJECTED"
-
+	LeaveRequestStatusREJECTED LeaveRequestStatus = "REJECTED"
 )
 
-
-
 // An address object as stored within Rippling.
-type Address  struct {
-    City *string`json:"city,omitempty"`
-    Country *string`json:"country,omitempty"`
-    State *string`json:"state,omitempty"`
-    StreetLine1 *string`json:"streetLine1,omitempty"`
-    StreetLine2 *string`json:"streetLine2,omitempty"`
-    Zip *string`json:"zip,omitempty"`
+type Address struct {
+	City        *string `json:"city,omitempty"`
+	Country     *string `json:"country,omitempty"`
+	State       *string `json:"state,omitempty"`
+	StreetLine1 *string `json:"streetLine1,omitempty"`
+	StreetLine2 *string `json:"streetLine2,omitempty"`
+	Zip         *string `json:"zip,omitempty"`
 }
 
 // Information about the Rippling user whose token is being used to access Rippling's API.
-type AuthenticatedUserMe  struct {
-// Unique identifier of the company.
-    Company *string`json:"company,omitempty"`
+type AuthenticatedUserMe struct {
+	// Unique identifier of the company.
+	Company *string `json:"company,omitempty"`
 
-// Unied identifier of the user (likely an admin).
-    Id *string`json:"id,omitempty"`
+	// Unied identifier of the user (likely an admin).
+	Id *string `json:"id,omitempty"`
 
-// Work email of the user.
-    WorkEmail *string`json:"workEmail,omitempty"`
+	// Work email of the user.
+	WorkEmail *string `json:"workEmail,omitempty"`
 }
 
 // The Rippling candidate model.
-type Candidate  struct {
-    Attachments *[]struct {
-// The file name.
-    FileName *string`json:"file_name,omitempty"`
+type Candidate struct {
+	Attachments *[]struct {
+		// The file name.
+		FileName *string `json:"file_name,omitempty"`
 
-// The public URL and name of a pdf/docx/doc/odt file containing documents pertaining to the candidate.
-    FileUrl *string`json:"file_url,omitempty"`
-}`json:"attachments,omitempty"`
+		// The public URL and name of a pdf/docx/doc/odt file containing documents pertaining to the candidate.
+		FileUrl *string `json:"file_url,omitempty"`
+	} `json:"attachments,omitempty"`
 
-// The unique identifier of the candidate from the ATS.
-    CandidateId *string`json:"candidateId,omitempty"`
+	// The unique identifier of the candidate from the ATS.
+	CandidateId *string `json:"candidateId,omitempty"`
 
-// A string field of the ofifcial currency doe as listed in ISO 4217.
-    Currency *string`json:"currency,omitempty"`
+	// A string field of the ofifcial currency doe as listed in ISO 4217.
+	Currency *string `json:"currency,omitempty"`
 
-// The department name as a string.
-    Department *string`json:"department,omitempty"`
+	// The department name as a string.
+	Department *string `json:"department,omitempty"`
 
-// The candidate's email.
-    Email *string`json:"email,omitempty"`
+	// The candidate's email.
+	Email *string `json:"email,omitempty"`
 
-// The ENUM type of employment the user will have within Rippling.
-    EmploymentType *CandidateEmploymentType`json:"employmentType,omitempty"`
+	// The ENUM type of employment the user will have within Rippling.
+	EmploymentType *CandidateEmploymentType `json:"employmentType,omitempty"`
 
-// The number of shares that will be given to the candidate.
-    EquityShares *int`json:"equityShares,omitempty"`
+	// The number of shares that will be given to the candidate.
+	EquityShares *int `json:"equityShares,omitempty"`
 
-// The candidate's job title.
-    JobTitle *string`json:"jobTitle,omitempty"`
+	// The candidate's job title.
+	JobTitle *string `json:"jobTitle,omitempty"`
 
-// The candidate's name.
-    Name *string`json:"name,omitempty"`
+	// The candidate's name.
+	Name *string `json:"name,omitempty"`
 
-// The candidate's phone number.
-    PhoneNumber *string`json:"phoneNumber,omitempty"`
+	// The candidate's phone number.
+	PhoneNumber *string `json:"phoneNumber,omitempty"`
 
-// The decimal value that the candidate gets paid every salaryUnit time period.
-    SalaryPerUnit *float32`json:"salaryPerUnit,omitempty"`
+	// The decimal value that the candidate gets paid every salaryUnit time period.
+	SalaryPerUnit *float32 `json:"salaryPerUnit,omitempty"`
 
-// An ENUM string value, denoting the frequency at which the candidate should be paid once the role begins. Note, the PAY_PERIOD ENUM implies the candidate is paid as per a custom pay period.
-    SalaryUnit *CandidateSalaryUnit`json:"salaryUnit,omitempty"`
+	// An ENUM string value, denoting the frequency at which the candidate should be paid once the role begins. Note, the PAY_PERIOD ENUM implies the candidate is paid as per a custom pay period.
+	SalaryUnit *CandidateSalaryUnit `json:"salaryUnit,omitempty"`
 
-// The bonus cash given to the candidate as a part of a one time payment, with two decimal digit precision.
-    SigningBonus *float64`json:"signingBonus,omitempty"`
+	// The bonus cash given to the candidate as a part of a one time payment, with two decimal digit precision.
+	SigningBonus *float64 `json:"signingBonus,omitempty"`
 
-// The would-be start date of the candidate.
-    StartDate *openapi_types.Date`json:"startDate,omitempty"`
+	// The would-be start date of the candidate.
+	StartDate *openapi_types.Date `json:"startDate,omitempty"`
 }
 
 // The ENUM type of employment the user will have within Rippling.
-type CandidateEmploymentType  string
+type CandidateEmploymentType string
 
 // An ENUM string value, denoting the frequency at which the candidate should be paid once the role begins. Note, the PAY_PERIOD ENUM implies the candidate is paid as per a custom pay period.
-type CandidateSalaryUnit  string
+type CandidateSalaryUnit string
 
 // A company object as represented within Rippling.
-type Company  struct {
-// An address object as stored within Rippling.
-    Address *Address`json:"address"`
-    Id *string`json:"id,omitempty"`
-    Name *string`json:"name,omitempty"`
-    Phone *string`json:"phone,omitempty"`
-    PrimaryEmail *string`json:"primaryEmail,omitempty"`
-    WorkLocations *[]WorkLocation`json:"workLocations,omitempty"`
+type Company struct {
+	// An address object as stored within Rippling.
+	Address       *Address        `json:"address"`
+	Id            *string         `json:"id,omitempty"`
+	Name          *string         `json:"name,omitempty"`
+	Phone         *string         `json:"phone,omitempty"`
+	PrimaryEmail  *string         `json:"primaryEmail,omitempty"`
+	WorkLocations *[]WorkLocation `json:"workLocations,omitempty"`
 }
 
 // A Custom Fields object within Rippling.
-type CustomFields  struct {
-// The identifier of the specific custom field.
-    Id *string`json:"Id,omitempty"`
+type CustomFields struct {
+	// The identifier of the specific custom field.
+	Id *string `json:"Id,omitempty"`
 
-// Denotes whether the custom field is or is not mandatory
-    Required *bool`json:"required,omitempty"`
+	// Denotes whether the custom field is or is not mandatory
+	Required *bool `json:"required,omitempty"`
 
-// The title of the custom field.
-    Title *string`json:"title,omitempty"`
+	// The title of the custom field.
+	Title *string `json:"title,omitempty"`
 
-// Denotes the type of the custom field.
-    Type *CustomFieldsType`json:"type,omitempty"`
+	// Denotes the type of the custom field.
+	Type *CustomFieldsType `json:"type,omitempty"`
 }
 
 // Denotes the type of the custom field.
-type CustomFieldsType  string
+type CustomFieldsType string
 
 // A company department object.
-type Department  struct {
-// Name of the department
-    Name *string`json:"name,omitempty"`
+type Department struct {
+	// Name of the department
+	Name *string `json:"name,omitempty"`
 
-// Id of the parent department, if one exists
-    Parent *string`json:"parent"`
+	// Id of the parent department, if one exists
+	Parent *string `json:"parent"`
 }
 
 // An employee model object.
-type Employee  struct {
-// A Custom Fields object within Rippling.
-    CustomFields *CustomFields`json:"customFields,omitempty"`
+type Employee struct {
+	// A Custom Fields object within Rippling.
+	CustomFields *CustomFields `json:"customFields,omitempty"`
 
-// The employee's department name
-    Department *string`json:"department,omitempty"`
+	// The employee's department name
+	Department *string `json:"department,omitempty"`
 
-// An ENUM of employment type
-    EmploymentType *EmployeeEmploymentType`json:"employmentType,omitempty"`
+	// An ENUM of employment type
+	EmploymentType *EmployeeEmploymentType `json:"employmentType,omitempty"`
 
-// The employee's end date
-    EndDate *string`json:"endDate"`
+	// The employee's end date
+	EndDate *string `json:"endDate"`
 
-// First name of the employee
-    FirstName *string`json:"firstName,omitempty"`
+	// First name of the employee
+	FirstName *string `json:"firstName,omitempty"`
 
-// The employee's gender
-    Gender *EmployeeGender`json:"gender,omitempty"`
+	// The employee's gender
+	Gender *EmployeeGender `json:"gender,omitempty"`
 
-// Unique Employee Identifier 
-    Id *string`json:"id,omitempty"`
+	// Unique Employee Identifier
+	Id *string `json:"id,omitempty"`
 
-// The employee's identified gender
-    IdentifiedGender *EmployeeIdentifiedGender`json:"identifiedGender,omitempty"`
+	// The employee's identified gender
+	IdentifiedGender *EmployeeIdentifiedGender `json:"identifiedGender,omitempty"`
 
-// Last name of the employee
-    LastName *string`json:"lastName,omitempty"`
+	// Last name of the employee
+	LastName *string `json:"lastName,omitempty"`
 
-// The unique identifier of the employee's manager. This value can be null.
-    Manager *string`json:"manager,omitempty"`
+	// The unique identifier of the employee's manager. This value can be null.
+	Manager *string `json:"manager,omitempty"`
 
-// Full name of the employee
-    Name *string`json:"name,omitempty"`
+	// Full name of the employee
+	Name *string `json:"name,omitempty"`
 
-// The employee's role status - roleState meanings:
-// 
-// INIT: An initial record of an individual. An offer has not been made and they have not started working at the company.
-// 
-// HIRED: An offer has been made but they have not accepted or started yet.
-// 
-// ACCEPTED: An offer has been made and they have accepted, but they have not started yet.
-// 
-// ACTIVE: The employee currently works at the company and their start date is today or in the past.
-// 
-// TERMINATED: The employee is no longer active.
-    RoleState *EmployeeRoleState`json:"roleState,omitempty"`
-    SpokeId *string`json:"spokeId"`
+	// The employee's role status - roleState meanings:
+	//
+	// INIT: An initial record of an individual. An offer has not been made and they have not started working at the company.
+	//
+	// HIRED: An offer has been made but they have not accepted or started yet.
+	//
+	// ACCEPTED: An offer has been made and they have accepted, but they have not started yet.
+	//
+	// ACTIVE: The employee currently works at the company and their start date is today or in the past.
+	//
+	// TERMINATED: The employee is no longer active.
+	RoleState *EmployeeRoleState `json:"roleState,omitempty"`
+	SpokeId   *string            `json:"spokeId"`
 
-// The employee's work title
-    Title *string`json:"title,omitempty"`
+	// The employee's work title
+	Title *string `json:"title,omitempty"`
 
-// The employee's work email
-    WorkEmail *string`json:"workEmail"`
+	// The employee's work email
+	WorkEmail *string `json:"workEmail"`
 
-// An address object as stored within Rippling.
-    WorkLocation *Address`json:"workLocation"`
+	// An address object as stored within Rippling.
+	WorkLocation *Address `json:"workLocation"`
 }
 
 // An ENUM of employment type
-type EmployeeEmploymentType  string
+type EmployeeEmploymentType string
 
 // The employee's gender
-type EmployeeGender  string
+type EmployeeGender string
 
 // The employee's identified gender
-type EmployeeIdentifiedGender  string
+type EmployeeIdentifiedGender string
 
 // The employee's role status - roleState meanings:
-// 
+//
 // INIT: An initial record of an individual. An offer has not been made and they have not started working at the company.
-// 
+//
 // HIRED: An offer has been made but they have not accepted or started yet.
-// 
+//
 // ACCEPTED: An offer has been made and they have accepted, but they have not started yet.
-// 
+//
 // ACTIVE: The employee currently works at the company and their start date is today or in the past.
-// 
+//
 // TERMINATED: The employee is no longer active.
-type EmployeeRoleState  string
+type EmployeeRoleState string
 
 // The event model for company activity.
-// 
+//
 // Please note, the event type can be one of the following:
-// 
+//
 // - EXTERNAL_ACCONT_CREATE
 // - EXTERNAL_ACCOUNT_INVITE
 // - EXTERNAL_ACCOUNT_DELETE
@@ -467,457 +431,359 @@ type EmployeeRoleState  string
 // - ACCOUNT_PASSWORD_RESET
 // - ACCOUNT_PASSWORD_CHANGED
 // - TWO_FACTOR_DEVICE_RESET
-type Event  struct {
-// Unique identifier for the company.
-    Company *string`json:"company,omitempty"`
+type Event struct {
+	// Unique identifier for the company.
+	Company *string `json:"company,omitempty"`
 
-// Reason for the event, tied to the type of eveent.
-    EventReason *struct {
-// Message of the event.
-    Message *string`json:"message,omitempty"`
+	// Reason for the event, tied to the type of eveent.
+	EventReason *struct {
+		// Message of the event.
+		Message *string `json:"message,omitempty"`
 
-// Reason for the event.
-    Reason *string`json:"reason,omitempty"`
-}`json:"event_reason"`
+		// Reason for the event.
+		Reason *string `json:"reason,omitempty"`
+	} `json:"event_reason"`
 
-// An ENUM value for the type of the event.
-    EventType *EventEventType`json:"event_type,omitempty"`
+	// An ENUM value for the type of the event.
+	EventType *EventEventType `json:"event_type,omitempty"`
 
-// Unique identifier of the event.
-    Id *string`json:"id,omitempty"`
+	// Unique identifier of the event.
+	Id *string `json:"id,omitempty"`
 
-// The actor of the event.
-    Initiator *struct {
-// The name used within Rippling.
-    DisplayName *string`json:"display_name,omitempty"`
+	// The actor of the event.
+	Initiator *struct {
+		// The name used within Rippling.
+		DisplayName *string `json:"display_name,omitempty"`
 
-// The icon used within Rippling.
-    Icon *string`json:"icon"`
+		// The icon used within Rippling.
+		Icon *string `json:"icon"`
 
-// A unique identifier for the employee that initiated the action, if the type is ROLE.
-    Role *string`json:"role"`
+		// A unique identifier for the employee that initiated the action, if the type is ROLE.
+		Role *string `json:"role"`
 
-// ENUM value for the type of actor.
-    Type *EventInitiatorType`json:"type,omitempty"`
-}`json:"initiator"`
+		// ENUM value for the type of actor.
+		Type *EventInitiatorType `json:"type,omitempty"`
+	} `json:"initiator"`
 
-// An array of event identifiers that are linked to the event.
-    LinkedEvents *[]string`json:"linked_events,omitempty"`
+	// An array of event identifiers that are linked to the event.
+	LinkedEvents *[]string `json:"linked_events,omitempty"`
 
-// Display name for the event, tied to the type of event.
-    Name *string`json:"name,omitempty"`
+	// Display name for the event, tied to the type of event.
+	Name *string `json:"name,omitempty"`
 
-// Geographic details from where the event was recorded.
-    RequestData *struct {
-// City the event was triggered from.
-    City *string`json:"city,omitempty"`
+	// Geographic details from where the event was recorded.
+	RequestData *struct {
+		// City the event was triggered from.
+		City *string `json:"city,omitempty"`
 
-// Country the event was triggered from.
-    Country *string`json:"country,omitempty"`
+		// Country the event was triggered from.
+		Country *string `json:"country,omitempty"`
 
-// Event IP addresss.
-    Ip *string`json:"ip,omitempty"`
+		// Event IP addresss.
+		Ip *string `json:"ip,omitempty"`
 
-// Latitude the event was triggered from.
-    Latitude *string`json:"latitude,omitempty"`
+		// Latitude the event was triggered from.
+		Latitude *string `json:"latitude,omitempty"`
 
-// Longitude the event was triggered from.
-    Longitude *string`json:"longitude,omitempty"`
-}`json:"request_data"`
+		// Longitude the event was triggered from.
+		Longitude *string `json:"longitude,omitempty"`
+	} `json:"request_data"`
 
-// Unique identifier for the external application for which the event was recorded. This will be Null for events that don't correspond to an external appliction (e.g. Rippling system and RPass events).
-    Spoke *string`json:"spoke"`
+	// Unique identifier for the external application for which the event was recorded. This will be Null for events that don't correspond to an external appliction (e.g. Rippling system and RPass events).
+	Spoke *string `json:"spoke"`
 
-// The list of objects of the event.
-    Subjects *[]struct {
-// Name used within Rippling.
-    DisplayName *string`json:"display_name,omitempty"`
+	// The list of objects of the event.
+	Subjects *[]struct {
+		// Name used within Rippling.
+		DisplayName *string `json:"display_name,omitempty"`
 
-// Icon used within Rippling.
-    Icon *string`json:"icon"`
+		// Icon used within Rippling.
+		Icon *string `json:"icon"`
 
-// Unique key for the event object.
-    Instance *string`json:"instance,omitempty"`
+		// Unique key for the event object.
+		Instance *string `json:"instance,omitempty"`
 
-// An ENUM value for the type of object.
-    Type *EventSubjectsType`json:"type,omitempty"`
-}`json:"subjects,omitempty"`
+		// An ENUM value for the type of object.
+		Type *EventSubjectsType `json:"type,omitempty"`
+	} `json:"subjects,omitempty"`
 
-// Timestamp at which the event was recorded.
-    Timestamp *string`json:"timestamp,omitempty"`
+	// Timestamp at which the event was recorded.
+	Timestamp *string `json:"timestamp,omitempty"`
 }
 
 // An ENUM value for the type of the event.
-type EventEventType  string
+type EventEventType string
 
 // ENUM value for the type of actor.
-type EventInitiatorType  string
+type EventInitiatorType string
 
 // An ENUM value for the type of object.
-type EventSubjectsType  string
+type EventSubjectsType string
 
 // Group defines model for Group.
-type Group  struct {
-    Id *string`json:"id,omitempty"`
+type Group struct {
+	Id *string `json:"id,omitempty"`
 
-// User-readable name of a Rippling group.
-    Name *string`json:"name,omitempty"`
+	// User-readable name of a Rippling group.
+	Name *string `json:"name,omitempty"`
 
-// Your id for the group; this should a unique string identifier.
-    SpokeId *string`json:"spokeId"`
+	// Your id for the group; this should a unique string identifier.
+	SpokeId *string `json:"spokeId"`
 
-// An array of employee Rippling ids.
-    Users *[]string`json:"users,omitempty"`
+	// An array of employee Rippling ids.
+	Users *[]string `json:"users,omitempty"`
 
-// The version unique identifier of the group.
-    Version *string`json:"version,omitempty"`
+	// The version unique identifier of the group.
+	Version *string `json:"version,omitempty"`
 }
 
 // This payload should be used when updating existing groups.
-type GroupUpdatePayload  struct {
-// The name of the Group.
-    Name *string`json:"name,omitempty"`
+type GroupUpdatePayload struct {
+	// The name of the Group.
+	Name *string `json:"name,omitempty"`
 
-// The external identifier of the Group.
-    SpokeId *string`json:"spokeId,omitempty"`
+	// The external identifier of the Group.
+	SpokeId *string `json:"spokeId,omitempty"`
 
-// The array of users within the Group.
-    Users *[]interface{}`json:"users,omitempty"`
+	// The array of users within the Group.
+	Users *[]interface{} `json:"users,omitempty"`
 
-// The version identifier of the Group.
-    Version *string`json:"version,omitempty"`
+	// The version identifier of the Group.
+	Version *string `json:"version,omitempty"`
 }
 
 // Leave request object.
-type LeaveRequest  struct {
-    Comments *string`json:"comments"`
-    CreatedAt *string`json:"createdAt,omitempty"`
-    Dates *[]struct {
-    Date *openapi_types.Date`json:"date,omitempty"`
-    NumMinutes *int`json:"numMinutes,omitempty"`
-}`json:"dates,omitempty"`
-    EndDate *string`json:"endDate,omitempty"`
+type LeaveRequest struct {
+	Comments  *string `json:"comments"`
+	CreatedAt *string `json:"createdAt,omitempty"`
+	Dates     *[]struct {
+		Date       *openapi_types.Date `json:"date,omitempty"`
+		NumMinutes *int                `json:"numMinutes,omitempty"`
+	} `json:"dates,omitempty"`
+	EndDate *string `json:"endDate,omitempty"`
 
-// Unique identifier of the leave request.
-    Id *string`json:"id,omitempty"`
-    LeavePolicy *string`json:"leavePolicy,omitempty"`
-    LeaveType *LeaveRequestLeaveType`json:"leaveType,omitempty"`
-    NumHours *int`json:"numHours"`
-    NumMinutes *int`json:"numMinutes"`
-    PolicyDisplayName *string`json:"policyDisplayName,omitempty"`
-    ProcessedAt *string`json:"processedAt,omitempty"`
+	// Unique identifier of the leave request.
+	Id                *string                `json:"id,omitempty"`
+	LeavePolicy       *string                `json:"leavePolicy,omitempty"`
+	LeaveType         *LeaveRequestLeaveType `json:"leaveType,omitempty"`
+	NumHours          *int                   `json:"numHours"`
+	NumMinutes        *int                   `json:"numMinutes"`
+	PolicyDisplayName *string                `json:"policyDisplayName,omitempty"`
+	ProcessedAt       *string                `json:"processedAt,omitempty"`
 
-// Unique identifier of the employee who approved or rejected the request. This may be null.
-    ProcessedBy *string`json:"processedBy,omitempty"`
-    ProcessedByName *string`json:"processedByName,omitempty"`
-    ReasonForLeave *string`json:"reasonForLeave,omitempty"`
-    RequestedBy *string`json:"requestedBy,omitempty"`
+	// Unique identifier of the employee who approved or rejected the request. This may be null.
+	ProcessedBy     *string `json:"processedBy,omitempty"`
+	ProcessedByName *string `json:"processedByName,omitempty"`
+	ReasonForLeave  *string `json:"reasonForLeave,omitempty"`
+	RequestedBy     *string `json:"requestedBy,omitempty"`
 
-// Unique identifier of the employee who made the request (in most cases this is the same as role).
-    RequestedByName *string`json:"requestedByName,omitempty"`
+	// Unique identifier of the employee who made the request (in most cases this is the same as role).
+	RequestedByName *string `json:"requestedByName,omitempty"`
 
-// Unique identifier of the employee who is taking leave.
-    Role *string`json:"role,omitempty"`
-    RoleName *string`json:"roleName,omitempty"`
-    StartDate *string`json:"startDate,omitempty"`
-    Status *LeaveRequestStatus`json:"status,omitempty"`
-    UpdatedAt *string`json:"updatedAt,omitempty"`
+	// Unique identifier of the employee who is taking leave.
+	Role      *string             `json:"role,omitempty"`
+	RoleName  *string             `json:"roleName,omitempty"`
+	StartDate *string             `json:"startDate,omitempty"`
+	Status    *LeaveRequestStatus `json:"status,omitempty"`
+	UpdatedAt *string             `json:"updatedAt,omitempty"`
 }
 
 // LeaveRequestLeaveType defines model for LeaveRequest.LeaveType.
-type LeaveRequestLeaveType  string
+type LeaveRequestLeaveType string
 
 // LeaveRequestStatus defines model for LeaveRequest.Status.
-type LeaveRequestStatus  string
+type LeaveRequestStatus string
 
 // Levels enable for self-defined,company-wide position levels, such as Manager, Engineering Manager, Executive, etc.
-type Level  struct {
-// Unique identifier of the level.
-    Id *string`json:"id,omitempty"`
+type Level struct {
+	// Unique identifier of the level.
+	Id *string `json:"id,omitempty"`
 
-// Name of the level.
-    Name *string`json:"name,omitempty"`
+	// Name of the level.
+	Name *string `json:"name,omitempty"`
 
-// The unique identifier of the parent level.
-    Parent *string`json:"parent"`
+	// The unique identifier of the parent level.
+	Parent *string `json:"parent"`
 }
 
 // A team is a self-defined group of employees within Rippling.
-type Team  struct {
-// The identifier of the team.
-    Id *string`json:"id,omitempty"`
+type Team struct {
+	// The identifier of the team.
+	Id *string `json:"id,omitempty"`
 
-// The name of the team.
-    Name *string`json:"name,omitempty"`
+	// The name of the team.
+	Name *string `json:"name,omitempty"`
 
-// The parent team (if this team is a subteam within a larger team).
-    Parent *string`json:"parent"`
+	// The parent team (if this team is a subteam within a larger team).
+	Parent *string `json:"parent"`
 }
 
 // A work location object.
-type WorkLocation  struct {
-// An address object as stored within Rippling.
-    Address *Address`json:"address"`
-    Nickname *string`json:"nickname,omitempty"`
+type WorkLocation struct {
+	// An address object as stored within Rippling.
+	Address  *Address `json:"address"`
+	Nickname *string  `json:"nickname,omitempty"`
 }
 
 // Ein defines model for ein.
-type Ein  int
+type Ein int
 
 // EmployeeId defines model for employeeId.
-type EmployeeId  int
+type EmployeeId int
 
 // GroupId defines model for groupId.
-type GroupId  int
+type GroupId int
 
 // Limit defines model for limit.
-type Limit  int
+type Limit int
 
 // Offset defines model for offset.
-type Offset  int
-
-
+type Offset int
 
 // PostAtsCandidatesPushCandidateJSONBody defines parameters for PostAtsCandidatesPushCandidate.
-type PostAtsCandidatesPushCandidateJSONBody  Candidate
-
-
-
-
+type PostAtsCandidatesPushCandidateJSONBody Candidate
 
 // GetCompanyActivityParams defines parameters for GetCompanyActivity.
-type GetCompanyActivityParams  struct {
-// Timestamp to list activity after (inclusive). This should be less than 90 days from now. Defaults to 90 days.
-    StartDate *openapi_types.Date`json:"startDate,omitempty"`
+type GetCompanyActivityParams struct {
+	// Timestamp to list activity after (inclusive). This should be less than 90 days from now. Defaults to 90 days.
+	StartDate *openapi_types.Date `json:"startDate,omitempty"`
 
-// Timestamp to list activity before (inclusive).
-    EndDate *openapi_types.Date`json:"endDate,omitempty"`
+	// Timestamp to list activity before (inclusive).
+	EndDate *openapi_types.Date `json:"endDate,omitempty"`
 
-// Specifies the pagination cursor to the next page
-    Next *string`json:"next,omitempty"`
+	// Specifies the pagination cursor to the next page
+	Next *string `json:"next,omitempty"`
 
-// Specifies the number of results to page (maximum: 1000) (default: 1000)
-    Limit *string`json:"limit,omitempty"`
+	// Specifies the number of results to page (maximum: 1000) (default: 1000)
+	Limit *string `json:"limit,omitempty"`
 }
-
-
 
 // GetCustomFieldsParams defines parameters for GetCustomFields.
-type GetCustomFieldsParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetCustomFieldsParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
-
-
 
 // GetDepartmentsParams defines parameters for GetDepartments.
-type GetDepartmentsParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetDepartmentsParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
-
-
 
 // GetEmployeesParams defines parameters for GetEmployees.
-type GetEmployeesParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetEmployeesParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
-
-
 
 // GetEmployeesIncludeTerminatedParams defines parameters for GetEmployeesIncludeTerminated.
-type GetEmployeesIncludeTerminatedParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetEmployeesIncludeTerminatedParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 
-// Employer identification number, also known as the Federal Emplower Identification Number or the Federal Tax Identification Number.
-    EIN *Ein`json:"EIN,omitempty"`
+	// Employer identification number, also known as the Federal Emplower Identification Number or the Federal Tax Identification Number.
+	EIN *Ein `json:"EIN,omitempty"`
 }
-
-
-
-
-
-
 
 // PostGroupsJSONBody defines parameters for PostGroups.
-type PostGroupsJSONBody  struct {
-// User-readable name of the group.
-    Name *string`json:"name,omitempty"`
+type PostGroupsJSONBody struct {
+	// User-readable name of the group.
+	Name *string `json:"name,omitempty"`
 
-// The unique ID for the group, this can be the unique identifier for the group entity object within your application.
-    SpokeId *string`json:"spokeId,omitempty"`
+	// The unique ID for the group, this can be the unique identifier for the group entity object within your application.
+	SpokeId *string `json:"spokeId,omitempty"`
 
-// An array of Rippling IDs that will be in the group.
-    Users *[]string`json:"users,omitempty"`
+	// An array of Rippling IDs that will be in the group.
+	Users *[]string `json:"users,omitempty"`
 }
-
-
-
-
 
 // PatchGroupsGroupIdJSONBody defines parameters for PatchGroupsGroupId.
-type PatchGroupsGroupIdJSONBody  GroupUpdatePayload
-
-
+type PatchGroupsGroupIdJSONBody GroupUpdatePayload
 
 // PutGroupsGroupIdJSONBody defines parameters for PutGroupsGroupId.
-type PutGroupsGroupIdJSONBody  GroupUpdatePayload
-
-
+type PutGroupsGroupIdJSONBody GroupUpdatePayload
 
 // GetLeaveRequestsParams defines parameters for GetLeaveRequests.
-type GetLeaveRequestsParams  struct {
-    Id *string`json:"id,omitempty"`
-    Role *string`json:"role,omitempty"`
-    RequestedBy *string`json:"requestedBy,omitempty"`
-    Status *string`json:"status,omitempty"`
+type GetLeaveRequestsParams struct {
+	Id          *string `json:"id,omitempty"`
+	Role        *string `json:"role,omitempty"`
+	RequestedBy *string `json:"requestedBy,omitempty"`
+	Status      *string `json:"status,omitempty"`
 
-// Start date of leave.
-    StartDate *string`json:"startDate,omitempty"`
+	// Start date of leave.
+	StartDate *string `json:"startDate,omitempty"`
 
-// End date of leave.
-    EndDate *string`json:"endDate,omitempty"`
-    LeavePolicy *string`json:"leavePolicy,omitempty"`
-    ProcessedBy *string`json:"processedBy,omitempty"`
+	// End date of leave.
+	EndDate     *string `json:"endDate,omitempty"`
+	LeavePolicy *string `json:"leavePolicy,omitempty"`
+	ProcessedBy *string `json:"processedBy,omitempty"`
 
-// Filter to capture whether the leave request overlaps with a date range.
-    From *string`json:"from,omitempty"`
+	// Filter to capture whether the leave request overlaps with a date range.
+	From *string `json:"from,omitempty"`
 
-// Filter to capture whether the leave request overlaps with a date range.
-    To *string`json:"to,omitempty"`
+	// Filter to capture whether the leave request overlaps with a date range.
+	To *string `json:"to,omitempty"`
 }
 
-
-
 // ProcessLeaveRequestsParams defines parameters for ProcessLeaveRequests.
-type ProcessLeaveRequestsParams  struct {
-// The action to be taken on the leave request. Can be either approved or declined.
-    Action ProcessLeaveRequestsParamsAction`json:"action"`
+type ProcessLeaveRequestsParams struct {
+	// The action to be taken on the leave request. Can be either approved or declined.
+	Action ProcessLeaveRequestsParamsAction `json:"action"`
 }
 
 // ProcessLeaveRequestsParamsAction defines parameters for ProcessLeaveRequests.
-type ProcessLeaveRequestsParamsAction  string
-
-
+type ProcessLeaveRequestsParamsAction string
 
 // GetLevelsParams defines parameters for GetLevels.
-type GetLevelsParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetLevelsParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
-
-
-
-
-
-
-
-
 
 // GetTeamsParams defines parameters for GetTeams.
-type GetTeamsParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetTeamsParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
-
-
 
 // GetWorkLocationsParams defines parameters for GetWorkLocations.
-type GetWorkLocationsParams  struct {
-// Sets a limit on the returned values
-    Limit *Limit`json:"limit,omitempty"`
+type GetWorkLocationsParams struct {
+	// Sets a limit on the returned values
+	Limit *Limit `json:"limit,omitempty"`
 
-// Offsets the returned values
-    Offset *Offset`json:"offset,omitempty"`
+	// Offsets the returned values
+	Offset *Offset `json:"offset,omitempty"`
 }
 
-
-
-
-
-
 // PostAtsCandidatesPushCandidateJSONRequestBody defines body for PostAtsCandidatesPushCandidate for application/json ContentType.
-type PostAtsCandidatesPushCandidateJSONRequestBody  PostAtsCandidatesPushCandidateJSONBody
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+type PostAtsCandidatesPushCandidateJSONRequestBody PostAtsCandidatesPushCandidateJSONBody
 
 // PostGroupsJSONRequestBody defines body for PostGroups for application/json ContentType.
-type PostGroupsJSONRequestBody  PostGroupsJSONBody
-
-
-
-
-
-
+type PostGroupsJSONRequestBody PostGroupsJSONBody
 
 // PatchGroupsGroupIdJSONRequestBody defines body for PatchGroupsGroupId for application/json ContentType.
-type PatchGroupsGroupIdJSONRequestBody  PatchGroupsGroupIdJSONBody
-
-
-
-
+type PatchGroupsGroupIdJSONRequestBody PatchGroupsGroupIdJSONBody
 
 // PutGroupsGroupIdJSONRequestBody defines body for PutGroupsGroupId for application/json ContentType.
-type PutGroupsGroupIdJSONRequestBody  PutGroupsGroupIdJSONBody
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+type PutGroupsGroupIdJSONRequestBody PutGroupsGroupIdJSONBody
 
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
@@ -951,25 +817,25 @@ type ClientOption func(*Client) error
 
 // Creates a new Client, with reasonable defaults
 func NewClient(server string, opts ...ClientOption) (*Client, error) {
-    // create a client with sane default values
-    client := Client{
-        Server: server,
-    }
-    // mutate client and add all optional params
-    for _, o := range opts {
-        if err := o(&client); err != nil {
-            return nil, err
-        }
-    }
-    // ensure the server URL always has a trailing slash
-    if !strings.HasSuffix(client.Server, "/") {
-        client.Server += "/"
-    }
-    // create httpClient, if not already present
-    if client.Client == nil {
-        client.Client = &http.Client{}
-    }
-    return &client, nil
+	// create a client with sane default values
+	client := Client{
+		Server: server,
+	}
+	// mutate client and add all optional params
+	for _, o := range opts {
+		if err := o(&client); err != nil {
+			return nil, err
+		}
+	}
+	// ensure the server URL always has a trailing slash
+	if !strings.HasSuffix(client.Server, "/") {
+		client.Server += "/"
+	}
+	// create httpClient, if not already present
+	if client.Client == nil {
+		client.Client = &http.Client{}
+	}
+	return &client, nil
 }
 
 // WithHTTPClient allows overriding the default Doer, which is
@@ -992,1843 +858,1575 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
-// PostAtsCandidatesPushCandidate request with any body
-    PostAtsCandidatesPushCandidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error)
+	// PostAtsCandidatesPushCandidate request with any body
+	PostAtsCandidatesPushCandidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-    PostAtsCandidatesPushCandidate(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+	PostAtsCandidatesPushCandidate(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetCompanies request
-    GetCompanies(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetCompanies request
+	GetCompanies(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetCompanyActivity request
-    GetCompanyActivity(ctx context.Context, params *GetCompanyActivityParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetCompanyActivity request
+	GetCompanyActivity(ctx context.Context, params *GetCompanyActivityParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetCustomFields request
-    GetCustomFields(ctx context.Context, params *GetCustomFieldsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetCustomFields request
+	GetCustomFields(ctx context.Context, params *GetCustomFieldsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetDepartments request
-    GetDepartments(ctx context.Context, params *GetDepartmentsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetDepartments request
+	GetDepartments(ctx context.Context, params *GetDepartmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetEmployees request
-    GetEmployees(ctx context.Context, params *GetEmployeesParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetEmployees request
+	GetEmployees(ctx context.Context, params *GetEmployeesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetEmployeesIncludeTerminated request
-    GetEmployeesIncludeTerminated(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetEmployeesIncludeTerminated request
+	GetEmployeesIncludeTerminated(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetEmployeesEmployeeId request
-    GetEmployeesEmployeeId(ctx context.Context, employeeId EmployeeId, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetEmployeesEmployeeId request
+	GetEmployeesEmployeeId(ctx context.Context, employeeId EmployeeId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetGroups request
-    GetGroups(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetGroups request
+	GetGroups(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// PostGroups request with any body
-    PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error)
+	// PostGroups request with any body
+	PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-    PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+	PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// DeleteGroupsGroupId request
-    DeleteGroupsGroupId(ctx context.Context, groupId GroupId, reqEditors... RequestEditorFn) (*http.Response, error)
+	// DeleteGroupsGroupId request
+	DeleteGroupsGroupId(ctx context.Context, groupId GroupId, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// PatchGroupsGroupId request with any body
-    PatchGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error)
+	// PatchGroupsGroupId request with any body
+	PatchGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-    PatchGroupsGroupId(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+	PatchGroupsGroupId(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// PutGroupsGroupId request with any body
-    PutGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error)
+	// PutGroupsGroupId request with any body
+	PutGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-    PutGroupsGroupId(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error)
+	PutGroupsGroupId(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetLeaveRequests request
-    GetLeaveRequests(ctx context.Context, params *GetLeaveRequestsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetLeaveRequests request
+	GetLeaveRequests(ctx context.Context, params *GetLeaveRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// ProcessLeaveRequests request
-    ProcessLeaveRequests(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// ProcessLeaveRequests request
+	ProcessLeaveRequests(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetLevels request
-    GetLevels(ctx context.Context, params *GetLevelsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetLevels request
+	GetLevels(ctx context.Context, params *GetLevelsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// PostMarkAppInstalled request
-    PostMarkAppInstalled(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error)
+	// PostMarkAppInstalled request
+	PostMarkAppInstalled(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetMe request
-    GetMe(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetMe request
+	GetMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetSamlIdpMetadata request
-    GetSamlIdpMetadata(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetSamlIdpMetadata request
+	GetSamlIdpMetadata(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetTeams request
-    GetTeams(ctx context.Context, params *GetTeamsParams, reqEditors... RequestEditorFn) (*http.Response, error)
+	// GetTeams request
+	GetTeams(ctx context.Context, params *GetTeamsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-// GetWorkLocations request
-    GetWorkLocations(ctx context.Context, params *GetWorkLocationsParams, reqEditors... RequestEditorFn) (*http.Response, error)
-
-
+	// GetWorkLocations request
+	GetWorkLocations(ctx context.Context, params *GetWorkLocationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
-
-
-func (c *Client) PostAtsCandidatesPushCandidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPostAtsCandidatesPushCandidateRequestWithBody(c.Server, contentType, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PostAtsCandidatesPushCandidateWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAtsCandidatesPushCandidateRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PostAtsCandidatesPushCandidate(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPostAtsCandidatesPushCandidateRequest(c.Server, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PostAtsCandidatesPushCandidate(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostAtsCandidatesPushCandidateRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-func (c *Client) GetCompanies(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetCompaniesRequest(c.Server)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetCompanies(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCompaniesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetCompanyActivity(ctx context.Context, params *GetCompanyActivityParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetCompanyActivityRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetCompanyActivity(ctx context.Context, params *GetCompanyActivityParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCompanyActivityRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetCustomFields(ctx context.Context, params *GetCustomFieldsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetCustomFieldsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetCustomFields(ctx context.Context, params *GetCustomFieldsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetCustomFieldsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetDepartments(ctx context.Context, params *GetDepartmentsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetDepartmentsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetDepartments(ctx context.Context, params *GetDepartmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetDepartmentsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetEmployees(ctx context.Context, params *GetEmployeesParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetEmployeesRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetEmployees(ctx context.Context, params *GetEmployeesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEmployeesRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetEmployeesIncludeTerminated(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetEmployeesIncludeTerminatedRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetEmployeesIncludeTerminated(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEmployeesIncludeTerminatedRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetEmployeesEmployeeId(ctx context.Context, employeeId EmployeeId, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetEmployeesEmployeeIdRequest(c.Server, employeeId)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetEmployeesEmployeeId(ctx context.Context, employeeId EmployeeId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetEmployeesEmployeeIdRequest(c.Server, employeeId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetGroups(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetGroupsRequest(c.Server)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetGroups(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetGroupsRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPostGroupsRequestWithBody(c.Server, contentType, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PostGroupsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostGroupsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPostGroupsRequest(c.Server, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PostGroups(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostGroupsRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-func (c *Client) DeleteGroupsGroupId(ctx context.Context, groupId GroupId, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewDeleteGroupsGroupIdRequest(c.Server, groupId)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) DeleteGroupsGroupId(ctx context.Context, groupId GroupId, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewDeleteGroupsGroupIdRequest(c.Server, groupId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PatchGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPatchGroupsGroupIdRequestWithBody(c.Server, groupId, contentType, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PatchGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchGroupsGroupIdRequestWithBody(c.Server, groupId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PatchGroupsGroupId(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPatchGroupsGroupIdRequest(c.Server, groupId, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PatchGroupsGroupId(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPatchGroupsGroupIdRequest(c.Server, groupId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-func (c *Client) PutGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPutGroupsGroupIdRequestWithBody(c.Server, groupId, contentType, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PutGroupsGroupIdWithBody(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutGroupsGroupIdRequestWithBody(c.Server, groupId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PutGroupsGroupId(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPutGroupsGroupIdRequest(c.Server, groupId, body)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PutGroupsGroupId(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPutGroupsGroupIdRequest(c.Server, groupId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-func (c *Client) GetLeaveRequests(ctx context.Context, params *GetLeaveRequestsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetLeaveRequestsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetLeaveRequests(ctx context.Context, params *GetLeaveRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLeaveRequestsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) ProcessLeaveRequests(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewProcessLeaveRequestsRequest(c.Server, id, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) ProcessLeaveRequests(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewProcessLeaveRequestsRequest(c.Server, id, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetLevels(ctx context.Context, params *GetLevelsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetLevelsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetLevels(ctx context.Context, params *GetLevelsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLevelsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) PostMarkAppInstalled(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewPostMarkAppInstalledRequest(c.Server)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) PostMarkAppInstalled(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPostMarkAppInstalledRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetMe(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetMeRequest(c.Server)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetMe(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetMeRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetSamlIdpMetadata(ctx context.Context, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetSamlIdpMetadataRequest(c.Server)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetSamlIdpMetadata(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetSamlIdpMetadataRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetTeams(ctx context.Context, params *GetTeamsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetTeamsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetTeams(ctx context.Context, params *GetTeamsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetTeamsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
-
-func (c *Client) GetWorkLocations(ctx context.Context, params *GetWorkLocationsParams, reqEditors... RequestEditorFn) (*http.Response, error) {
-    req, err := NewGetWorkLocationsRequest(c.Server, params)
-    if err != nil {
-        return nil, err
-    }
-    req = req.WithContext(ctx)
-    if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-        return nil, err
-    }
-    return c.Client.Do(req)
+func (c *Client) GetWorkLocations(ctx context.Context, params *GetWorkLocationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetWorkLocationsRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
-
-
-
-
-
-
 
 // NewPostAtsCandidatesPushCandidateRequest calls the generic PostAtsCandidatesPushCandidate builder with application/json body
 func NewPostAtsCandidatesPushCandidateRequest(server string, body PostAtsCandidatesPushCandidateJSONRequestBody) (*http.Request, error) {
-    var bodyReader io.Reader
-    buf, err := json.Marshal(body)
-    if err != nil {
-        return nil, err
-    }
-    bodyReader = bytes.NewReader(buf)
-    return NewPostAtsCandidatesPushCandidateRequestWithBody(server, "application/json", bodyReader)
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostAtsCandidatesPushCandidateRequestWithBody(server, "application/json", bodyReader)
 }
-
 
 // NewPostAtsCandidatesPushCandidateRequestWithBody generates requests for PostAtsCandidatesPushCandidate with any type of body
 func NewPostAtsCandidatesPushCandidateRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/ats_candidates/push_candidate")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/ats_candidates/push_candidate")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("POST", queryURL.String(), body)
-    if err != nil {
-        return nil, err
-    }
+	req.Header.Add("Content-Type", contentType)
 
-    req.Header.Add("Content-Type", contentType)
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetCompaniesRequest generates requests for GetCompanies
 func NewGetCompaniesRequest(server string) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/companies/current")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/companies/current")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
-
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetCompanyActivityRequest generates requests for GetCompanyActivity
 func NewGetCompanyActivityRequest(server string, params *GetCompanyActivityParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/company_activity")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/company_activity")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.StartDate != nil {
 
-     if params.StartDate != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "startDate", runtime.ParamLocationQuery, *params.StartDate); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "startDate", runtime.ParamLocationQuery, *params.StartDate); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.EndDate != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "endDate", runtime.ParamLocationQuery, *params.EndDate); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-     if params.Next != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "next", runtime.ParamLocationQuery, *params.Next); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	if params.EndDate != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "endDate", runtime.ParamLocationQuery, *params.EndDate); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    queryURL.RawQuery = queryValues.Encode()
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	if params.Next != nil {
 
-    
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "next", runtime.ParamLocationQuery, *params.Next); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
+	}
 
+	if params.Limit != nil {
 
-    return req, nil
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
-
-
-
 
 // NewGetCustomFieldsRequest generates requests for GetCustomFields
 func NewGetCustomFieldsRequest(server string, params *GetCustomFieldsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/custom_fields")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/custom_fields")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetDepartmentsRequest generates requests for GetDepartments
 func NewGetDepartmentsRequest(server string, params *GetDepartmentsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/departments")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/departments")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetEmployeesRequest generates requests for GetEmployees
 func NewGetEmployeesRequest(server string, params *GetEmployeesParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/employees")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/employees")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetEmployeesIncludeTerminatedRequest generates requests for GetEmployeesIncludeTerminated
 func NewGetEmployeesIncludeTerminatedRequest(server string, params *GetEmployeesIncludeTerminatedParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/employees/include_terminated")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/employees/include_terminated")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-     if params.EIN != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "EIN", runtime.ParamLocationQuery, *params.EIN); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	if params.Offset != nil {
 
-    queryURL.RawQuery = queryValues.Encode()
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	}
 
-    
+	if params.EIN != nil {
 
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "EIN", runtime.ParamLocationQuery, *params.EIN); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
+	}
 
-    return req, nil
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
-
-
-
 
 // NewGetEmployeesEmployeeIdRequest generates requests for GetEmployeesEmployeeId
 func NewGetEmployeesEmployeeIdRequest(server string, employeeId EmployeeId) (*http.Request, error) {
-    var err error
+	var err error
 
-    var pathParam0 string
-    
-    
-    
-    pathParam0, err = runtime.StyleParamWithLocation("simple", false, "employeeId", runtime.ParamLocationPath, employeeId)
-    if err != nil {
-        return nil, err
-    }
-    
+	var pathParam0 string
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "employeeId", runtime.ParamLocationPath, employeeId)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/employees/%s", pathParam0)
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	operationPath := fmt.Sprintf("/employees/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetGroupsRequest generates requests for GetGroups
 func NewGetGroupsRequest(server string) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/groups")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/groups")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
-
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
 
 // NewPostGroupsRequest calls the generic PostGroups builder with application/json body
 func NewPostGroupsRequest(server string, body PostGroupsJSONRequestBody) (*http.Request, error) {
-    var bodyReader io.Reader
-    buf, err := json.Marshal(body)
-    if err != nil {
-        return nil, err
-    }
-    bodyReader = bytes.NewReader(buf)
-    return NewPostGroupsRequestWithBody(server, "application/json", bodyReader)
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPostGroupsRequestWithBody(server, "application/json", bodyReader)
 }
-
 
 // NewPostGroupsRequestWithBody generates requests for PostGroups with any type of body
 func NewPostGroupsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/groups")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/groups")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("POST", queryURL.String(), body)
-    if err != nil {
-        return nil, err
-    }
+	req.Header.Add("Content-Type", contentType)
 
-    req.Header.Add("Content-Type", contentType)
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewDeleteGroupsGroupIdRequest generates requests for DeleteGroupsGroupId
 func NewDeleteGroupsGroupIdRequest(server string, groupId GroupId) (*http.Request, error) {
-    var err error
+	var err error
 
-    var pathParam0 string
-    
-    
-    
-    pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
-    if err != nil {
-        return nil, err
-    }
-    
+	var pathParam0 string
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/groups/%s", pathParam0)
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("DELETE", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequest("DELETE", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
 
 // NewPatchGroupsGroupIdRequest calls the generic PatchGroupsGroupId builder with application/json body
 func NewPatchGroupsGroupIdRequest(server string, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody) (*http.Request, error) {
-    var bodyReader io.Reader
-    buf, err := json.Marshal(body)
-    if err != nil {
-        return nil, err
-    }
-    bodyReader = bytes.NewReader(buf)
-    return NewPatchGroupsGroupIdRequestWithBody(server, groupId, "application/json", bodyReader)
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPatchGroupsGroupIdRequestWithBody(server, groupId, "application/json", bodyReader)
 }
-
 
 // NewPatchGroupsGroupIdRequestWithBody generates requests for PatchGroupsGroupId with any type of body
 func NewPatchGroupsGroupIdRequestWithBody(server string, groupId GroupId, contentType string, body io.Reader) (*http.Request, error) {
-    var err error
+	var err error
 
-    var pathParam0 string
-    
-    
-    
-    pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
-    if err != nil {
-        return nil, err
-    }
-    
+	var pathParam0 string
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/groups/%s", pathParam0)
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("PATCH", queryURL.String(), body)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequest("PATCH", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
 
-    req.Header.Add("Content-Type", contentType)
+	req.Header.Add("Content-Type", contentType)
 
-
-
-    return req, nil
+	return req, nil
 }
-
-
 
 // NewPutGroupsGroupIdRequest calls the generic PutGroupsGroupId builder with application/json body
 func NewPutGroupsGroupIdRequest(server string, groupId GroupId, body PutGroupsGroupIdJSONRequestBody) (*http.Request, error) {
-    var bodyReader io.Reader
-    buf, err := json.Marshal(body)
-    if err != nil {
-        return nil, err
-    }
-    bodyReader = bytes.NewReader(buf)
-    return NewPutGroupsGroupIdRequestWithBody(server, groupId, "application/json", bodyReader)
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPutGroupsGroupIdRequestWithBody(server, groupId, "application/json", bodyReader)
 }
-
 
 // NewPutGroupsGroupIdRequestWithBody generates requests for PutGroupsGroupId with any type of body
 func NewPutGroupsGroupIdRequestWithBody(server string, groupId GroupId, contentType string, body io.Reader) (*http.Request, error) {
-    var err error
+	var err error
 
-    var pathParam0 string
-    
-    
-    
-    pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
-    if err != nil {
-        return nil, err
-    }
-    
+	var pathParam0 string
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "groupId", runtime.ParamLocationPath, groupId)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/groups/%s", pathParam0)
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	operationPath := fmt.Sprintf("/groups/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("PUT", queryURL.String(), body)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
 
-    req.Header.Add("Content-Type", contentType)
+	req.Header.Add("Content-Type", contentType)
 
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetLeaveRequestsRequest generates requests for GetLeaveRequests
 func NewGetLeaveRequestsRequest(server string, params *GetLeaveRequestsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/leave_requests")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/leave_requests")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Id != nil {
 
-     if params.Id != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "id", runtime.ParamLocationQuery, *params.Id); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "id", runtime.ParamLocationQuery, *params.Id); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Role != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "role", runtime.ParamLocationQuery, *params.Role); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-     if params.RequestedBy != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "requestedBy", runtime.ParamLocationQuery, *params.RequestedBy); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	if params.Role != nil {
 
-     if params.Status != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "role", runtime.ParamLocationQuery, *params.Role); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.StartDate != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "startDate", runtime.ParamLocationQuery, *params.StartDate); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-     if params.EndDate != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "endDate", runtime.ParamLocationQuery, *params.EndDate); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	if params.RequestedBy != nil {
 
-     if params.LeavePolicy != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "leavePolicy", runtime.ParamLocationQuery, *params.LeavePolicy); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "requestedBy", runtime.ParamLocationQuery, *params.RequestedBy); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.ProcessedBy != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "processedBy", runtime.ParamLocationQuery, *params.ProcessedBy); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-     if params.From != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "from", runtime.ParamLocationQuery, *params.From); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	if params.Status != nil {
 
-     if params.To != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "to", runtime.ParamLocationQuery, *params.To); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "status", runtime.ParamLocationQuery, *params.Status); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    queryURL.RawQuery = queryValues.Encode()
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	if params.StartDate != nil {
 
-    
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "startDate", runtime.ParamLocationQuery, *params.StartDate); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
+	}
 
+	if params.EndDate != nil {
 
-    return req, nil
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "endDate", runtime.ParamLocationQuery, *params.EndDate); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.LeavePolicy != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "leavePolicy", runtime.ParamLocationQuery, *params.LeavePolicy); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.ProcessedBy != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "processedBy", runtime.ParamLocationQuery, *params.ProcessedBy); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.From != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "from", runtime.ParamLocationQuery, *params.From); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	if params.To != nil {
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "to", runtime.ParamLocationQuery, *params.To); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+	}
+
+	queryURL.RawQuery = queryValues.Encode()
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
-
-
-
 
 // NewProcessLeaveRequestsRequest generates requests for ProcessLeaveRequests
 func NewProcessLeaveRequestsRequest(server string, id string, params *ProcessLeaveRequestsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    var pathParam0 string
-    
-    
-    
-    pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
-    if err != nil {
-        return nil, err
-    }
-    
+	var pathParam0 string
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "id", runtime.ParamLocationPath, id)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/leave_requests/%s/process", pathParam0)
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	operationPath := fmt.Sprintf("/leave_requests/%s/process", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
-    queryValues := queryURL.Query()
+	queryValues := queryURL.Query()
 
-    
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "action", runtime.ParamLocationQuery, params.Action); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    
+	if queryFrag, err := runtime.StyleParamWithLocation("form", true, "action", runtime.ParamLocationQuery, params.Action); err != nil {
+		return nil, err
+	} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+		return nil, err
+	} else {
+		for k, v := range parsed {
+			for _, v2 := range v {
+				queryValues.Add(k, v2)
+			}
+		}
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	queryURL.RawQuery = queryValues.Encode()
 
-    req, err := http.NewRequest("POST", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetLevelsRequest generates requests for GetLevels
 func NewGetLevelsRequest(server string, params *GetLevelsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/levels")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/levels")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewPostMarkAppInstalledRequest generates requests for PostMarkAppInstalled
 func NewPostMarkAppInstalledRequest(server string) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/mark_app_installed")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/mark_app_installed")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("POST", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
-
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetMeRequest generates requests for GetMe
 func NewGetMeRequest(server string) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/me")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/me")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
-
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetSamlIdpMetadataRequest generates requests for GetSamlIdpMetadata
 func NewGetSamlIdpMetadataRequest(server string) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/saml/idp_metadata")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/saml/idp_metadata")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
-
-    
-
-
-
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetTeamsRequest generates requests for GetTeams
 func NewGetTeamsRequest(server string, params *GetTeamsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/teams")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/teams")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
-
 
 // NewGetWorkLocationsRequest generates requests for GetWorkLocations
 func NewGetWorkLocationsRequest(server string, params *GetWorkLocationsParams) (*http.Request, error) {
-    var err error
+	var err error
 
-    serverURL, err := url.Parse(server)
-    if err != nil {
-        return nil, err
-    }
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
 
-    operationPath := fmt.Sprintf("/work_locations")
-    if operationPath[0] == '/' {
-        operationPath = "." + operationPath
-    }
+	operationPath := fmt.Sprintf("/work_locations")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
 
-    queryURL, err := serverURL.Parse(operationPath)
-    if err != nil {
-        return nil, err
-    }
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
 
+	queryValues := queryURL.Query()
 
-    queryValues := queryURL.Query()
+	if params.Limit != nil {
 
-     if params.Limit != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-     if params.Offset != nil { 
-    
-    
-    
-    if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
-        return nil, err
-    } else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-       return nil, err
-    } else {
-       for k, v := range parsed {
-           for _, v2 := range v {
-               queryValues.Add(k, v2)
-           }
-       }
-    }
-    
-    }
+	}
 
-    queryURL.RawQuery = queryValues.Encode()
+	if params.Offset != nil {
 
-    req, err := http.NewRequest("GET", queryURL.String(), nil)
-    if err != nil {
-        return nil, err
-    }
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "offset", runtime.ParamLocationQuery, *params.Offset); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
 
-    
+	}
 
+	queryURL.RawQuery = queryValues.Encode()
 
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
-    return req, nil
+	return req, nil
 }
-
-
 
 func (c *Client) applyEditors(ctx context.Context, req *http.Request, additionalEditors []RequestEditorFn) error {
-    for _, r := range c.RequestEditors {
-        if err := r(ctx, req); err != nil {
-            return err
-        }
-    }
-    for _, r := range additionalEditors {
-        if err := r(ctx, req); err != nil {
-            return err
-        }
-    }
-    return nil
+	for _, r := range c.RequestEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	for _, r := range additionalEditors {
+		if err := r(ctx, req); err != nil {
+			return err
+		}
+	}
+	return nil
 }
+
 // ClientWithResponses builds on ClientInterface to offer response payloads
 type ClientWithResponses struct {
-    ClientInterface
+	ClientInterface
 }
 
 // NewClientWithResponses creates a new ClientWithResponses, which wraps
 // Client with return type handling
 func NewClientWithResponses(server string, opts ...ClientOption) (*ClientWithResponses, error) {
-    client, err := NewClient(server, opts...)
-    if err != nil {
-        return nil, err
-    }
-    return &ClientWithResponses{client}, nil
+	client, err := NewClient(server, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &ClientWithResponses{client}, nil
 }
 
 // WithBaseURL overrides the baseURL.
@@ -2845,3094 +2443,2570 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
-// PostAtsCandidatesPushCandidate request with any body
-    PostAtsCandidatesPushCandidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error)
+	// PostAtsCandidatesPushCandidate request with any body
+	PostAtsCandidatesPushCandidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error)
 
-    PostAtsCandidatesPushCandidateWithResponse(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors... RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error)
+	PostAtsCandidatesPushCandidateWithResponse(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error)
 
-// GetCompanies request
-    GetCompaniesWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetCompaniesResponse, error)
+	// GetCompanies request
+	GetCompaniesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCompaniesResponse, error)
 
-// GetCompanyActivity request
-    GetCompanyActivityWithResponse(ctx context.Context, params *GetCompanyActivityParams, reqEditors... RequestEditorFn) (*GetCompanyActivityResponse, error)
+	// GetCompanyActivity request
+	GetCompanyActivityWithResponse(ctx context.Context, params *GetCompanyActivityParams, reqEditors ...RequestEditorFn) (*GetCompanyActivityResponse, error)
 
-// GetCustomFields request
-    GetCustomFieldsWithResponse(ctx context.Context, params *GetCustomFieldsParams, reqEditors... RequestEditorFn) (*GetCustomFieldsResponse, error)
+	// GetCustomFields request
+	GetCustomFieldsWithResponse(ctx context.Context, params *GetCustomFieldsParams, reqEditors ...RequestEditorFn) (*GetCustomFieldsResponse, error)
 
-// GetDepartments request
-    GetDepartmentsWithResponse(ctx context.Context, params *GetDepartmentsParams, reqEditors... RequestEditorFn) (*GetDepartmentsResponse, error)
+	// GetDepartments request
+	GetDepartmentsWithResponse(ctx context.Context, params *GetDepartmentsParams, reqEditors ...RequestEditorFn) (*GetDepartmentsResponse, error)
 
-// GetEmployees request
-    GetEmployeesWithResponse(ctx context.Context, params *GetEmployeesParams, reqEditors... RequestEditorFn) (*GetEmployeesResponse, error)
+	// GetEmployees request
+	GetEmployeesWithResponse(ctx context.Context, params *GetEmployeesParams, reqEditors ...RequestEditorFn) (*GetEmployeesResponse, error)
 
-// GetEmployeesIncludeTerminated request
-    GetEmployeesIncludeTerminatedWithResponse(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors... RequestEditorFn) (*GetEmployeesIncludeTerminatedResponse, error)
+	// GetEmployeesIncludeTerminated request
+	GetEmployeesIncludeTerminatedWithResponse(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors ...RequestEditorFn) (*GetEmployeesIncludeTerminatedResponse, error)
 
-// GetEmployeesEmployeeId request
-    GetEmployeesEmployeeIdWithResponse(ctx context.Context, employeeId EmployeeId, reqEditors... RequestEditorFn) (*GetEmployeesEmployeeIdResponse, error)
+	// GetEmployeesEmployeeId request
+	GetEmployeesEmployeeIdWithResponse(ctx context.Context, employeeId EmployeeId, reqEditors ...RequestEditorFn) (*GetEmployeesEmployeeIdResponse, error)
 
-// GetGroups request
-    GetGroupsWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetGroupsResponse, error)
+	// GetGroups request
+	GetGroupsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGroupsResponse, error)
 
-// PostGroups request with any body
-    PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PostGroupsResponse, error)
+	// PostGroups request with any body
+	PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error)
 
-    PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors... RequestEditorFn) (*PostGroupsResponse, error)
+	PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error)
 
-// DeleteGroupsGroupId request
-    DeleteGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, reqEditors... RequestEditorFn) (*DeleteGroupsGroupIdResponse, error)
+	// DeleteGroupsGroupId request
+	DeleteGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, reqEditors ...RequestEditorFn) (*DeleteGroupsGroupIdResponse, error)
 
-// PatchGroupsGroupId request with any body
-    PatchGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PatchGroupsGroupIdResponse, error)
+	// PatchGroupsGroupId request with any body
+	PatchGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchGroupsGroupIdResponse, error)
 
-    PatchGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*PatchGroupsGroupIdResponse, error)
+	PatchGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchGroupsGroupIdResponse, error)
 
-// PutGroupsGroupId request with any body
-    PutGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PutGroupsGroupIdResponse, error)
+	// PutGroupsGroupId request with any body
+	PutGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutGroupsGroupIdResponse, error)
 
-    PutGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*PutGroupsGroupIdResponse, error)
+	PutGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutGroupsGroupIdResponse, error)
 
-// GetLeaveRequests request
-    GetLeaveRequestsWithResponse(ctx context.Context, params *GetLeaveRequestsParams, reqEditors... RequestEditorFn) (*GetLeaveRequestsResponse, error)
+	// GetLeaveRequests request
+	GetLeaveRequestsWithResponse(ctx context.Context, params *GetLeaveRequestsParams, reqEditors ...RequestEditorFn) (*GetLeaveRequestsResponse, error)
 
-// ProcessLeaveRequests request
-    ProcessLeaveRequestsWithResponse(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors... RequestEditorFn) (*ProcessLeaveRequestsResponse, error)
+	// ProcessLeaveRequests request
+	ProcessLeaveRequestsWithResponse(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors ...RequestEditorFn) (*ProcessLeaveRequestsResponse, error)
 
-// GetLevels request
-    GetLevelsWithResponse(ctx context.Context, params *GetLevelsParams, reqEditors... RequestEditorFn) (*GetLevelsResponse, error)
+	// GetLevels request
+	GetLevelsWithResponse(ctx context.Context, params *GetLevelsParams, reqEditors ...RequestEditorFn) (*GetLevelsResponse, error)
 
-// PostMarkAppInstalled request
-    PostMarkAppInstalledWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*PostMarkAppInstalledResponse, error)
+	// PostMarkAppInstalled request
+	PostMarkAppInstalledWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostMarkAppInstalledResponse, error)
 
-// GetMe request
-    GetMeWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetMeResponse, error)
+	// GetMe request
+	GetMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMeResponse, error)
 
-// GetSamlIdpMetadata request
-    GetSamlIdpMetadataWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetSamlIdpMetadataResponse, error)
+	// GetSamlIdpMetadata request
+	GetSamlIdpMetadataWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSamlIdpMetadataResponse, error)
 
-// GetTeams request
-    GetTeamsWithResponse(ctx context.Context, params *GetTeamsParams, reqEditors... RequestEditorFn) (*GetTeamsResponse, error)
+	// GetTeams request
+	GetTeamsWithResponse(ctx context.Context, params *GetTeamsParams, reqEditors ...RequestEditorFn) (*GetTeamsResponse, error)
 
-// GetWorkLocations request
-    GetWorkLocationsWithResponse(ctx context.Context, params *GetWorkLocationsParams, reqEditors... RequestEditorFn) (*GetWorkLocationsResponse, error)
-
-
+	// GetWorkLocations request
+	GetWorkLocationsWithResponse(ctx context.Context, params *GetWorkLocationsParams, reqEditors ...RequestEditorFn) (*GetWorkLocationsResponse, error)
 }
 
-
 type PostAtsCandidatesPushCandidateResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *Candidate
+	JSON200      *Candidate
 }
 
 // Status returns HTTPResponse.Status
 func (r PostAtsCandidatesPushCandidateResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostAtsCandidatesPushCandidateResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetCompaniesResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *Company
+	JSON200      *Company
 }
 
 // Status returns HTTPResponse.Status
 func (r GetCompaniesResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetCompaniesResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetCompanyActivityResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *struct {
-    Data *struct {
-    Events *[]Event`json:"events"`
-    Next *string`json:"next,omitempty"`
-}`json:"data"`
-    Error *string`json:"error"`
-}
+	JSON200      *struct {
+		Data *struct {
+			Events *[]Event `json:"events"`
+			Next   *string  `json:"next,omitempty"`
+		} `json:"data"`
+		Error *string `json:"error"`
+	}
 }
 
 // Status returns HTTPResponse.Status
 func (r GetCompanyActivityResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetCompanyActivityResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetCustomFieldsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]CustomFields
+	JSON200      *[]CustomFields
 }
 
 // Status returns HTTPResponse.Status
 func (r GetCustomFieldsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetCustomFieldsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetDepartmentsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Department
+	JSON200      *[]Department
 }
 
 // Status returns HTTPResponse.Status
 func (r GetDepartmentsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetDepartmentsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetEmployeesResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Employee
+	JSON200      *[]Employee
 }
 
 // Status returns HTTPResponse.Status
 func (r GetEmployeesResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetEmployeesResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetEmployeesIncludeTerminatedResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Employee
+	JSON200      *[]Employee
 }
 
 // Status returns HTTPResponse.Status
 func (r GetEmployeesIncludeTerminatedResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetEmployeesIncludeTerminatedResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetEmployeesEmployeeIdResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *Employee
+	JSON200      *Employee
 }
 
 // Status returns HTTPResponse.Status
 func (r GetEmployeesEmployeeIdResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetEmployeesEmployeeIdResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetGroupsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Group
+	JSON200      *[]Group
 }
 
 // Status returns HTTPResponse.Status
 func (r GetGroupsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetGroupsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PostGroupsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON201 *Group
+	JSON201      *Group
 }
 
 // Status returns HTTPResponse.Status
 func (r PostGroupsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostGroupsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type DeleteGroupsGroupIdResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
 }
 
 // Status returns HTTPResponse.Status
 func (r DeleteGroupsGroupIdResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DeleteGroupsGroupIdResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PatchGroupsGroupIdResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *Group
+	JSON200      *Group
 }
 
 // Status returns HTTPResponse.Status
 func (r PatchGroupsGroupIdResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PatchGroupsGroupIdResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PutGroupsGroupIdResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *Group
+	JSON200      *Group
 }
 
 // Status returns HTTPResponse.Status
 func (r PutGroupsGroupIdResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PutGroupsGroupIdResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetLeaveRequestsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]LeaveRequest
+	JSON200      *[]LeaveRequest
 }
 
 // Status returns HTTPResponse.Status
 func (r GetLeaveRequestsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetLeaveRequestsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type ProcessLeaveRequestsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *LeaveRequest
+	JSON200      *LeaveRequest
 }
 
 // Status returns HTTPResponse.Status
 func (r ProcessLeaveRequestsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ProcessLeaveRequestsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetLevelsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Level
+	JSON200      *[]Level
 }
 
 // Status returns HTTPResponse.Status
 func (r GetLevelsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetLevelsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type PostMarkAppInstalledResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *struct {
-    Ok bool`json:"ok"`
-}
+	JSON200      *struct {
+		Ok bool `json:"ok"`
+	}
 }
 
 // Status returns HTTPResponse.Status
 func (r PostMarkAppInstalledResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PostMarkAppInstalledResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetMeResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *AuthenticatedUserMe
+	JSON200      *AuthenticatedUserMe
 }
 
 // Status returns HTTPResponse.Status
 func (r GetMeResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetMeResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetSamlIdpMetadataResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    XML200 *string
+	XML200       *string
 }
 
 // Status returns HTTPResponse.Status
 func (r GetSamlIdpMetadataResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetSamlIdpMetadataResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetTeamsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]Team
+	JSON200      *[]Team
 }
 
 // Status returns HTTPResponse.Status
 func (r GetTeamsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetTeamsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetWorkLocationsResponse struct {
-    Body         []byte
+	Body         []byte
 	HTTPResponse *http.Response
-    JSON200 *[]WorkLocation
+	JSON200      *[]WorkLocation
 }
 
 // Status returns HTTPResponse.Status
 func (r GetWorkLocationsResponse) Status() string {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.Status
-    }
-    return http.StatusText(0)
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
 }
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetWorkLocationsResponse) StatusCode() int {
-    if r.HTTPResponse != nil {
-        return r.HTTPResponse.StatusCode
-    }
-    return 0
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
-
-
-
-
-
 
 // PostAtsCandidatesPushCandidateWithBodyWithResponse request with arbitrary body returning *PostAtsCandidatesPushCandidateResponse
-func (c *ClientWithResponses) PostAtsCandidatesPushCandidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error){
-    rsp, err := c.PostAtsCandidatesPushCandidateWithBody(ctx, contentType, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePostAtsCandidatesPushCandidateResponse(rsp)
+func (c *ClientWithResponses) PostAtsCandidatesPushCandidateWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error) {
+	rsp, err := c.PostAtsCandidatesPushCandidateWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAtsCandidatesPushCandidateResponse(rsp)
 }
 
-
-func (c *ClientWithResponses) PostAtsCandidatesPushCandidateWithResponse(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors... RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error) {
-    rsp, err := c.PostAtsCandidatesPushCandidate(ctx, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePostAtsCandidatesPushCandidateResponse(rsp)
+func (c *ClientWithResponses) PostAtsCandidatesPushCandidateWithResponse(ctx context.Context, body PostAtsCandidatesPushCandidateJSONRequestBody, reqEditors ...RequestEditorFn) (*PostAtsCandidatesPushCandidateResponse, error) {
+	rsp, err := c.PostAtsCandidatesPushCandidate(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostAtsCandidatesPushCandidateResponse(rsp)
 }
-
-
-
-
 
 // GetCompaniesWithResponse request returning *GetCompaniesResponse
-func (c *ClientWithResponses) GetCompaniesWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetCompaniesResponse, error){
-    rsp, err := c.GetCompanies(ctx, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetCompaniesResponse(rsp)
+func (c *ClientWithResponses) GetCompaniesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetCompaniesResponse, error) {
+	rsp, err := c.GetCompanies(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCompaniesResponse(rsp)
 }
-
-
-
-
-
 
 // GetCompanyActivityWithResponse request returning *GetCompanyActivityResponse
-func (c *ClientWithResponses) GetCompanyActivityWithResponse(ctx context.Context, params *GetCompanyActivityParams, reqEditors... RequestEditorFn) (*GetCompanyActivityResponse, error){
-    rsp, err := c.GetCompanyActivity(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetCompanyActivityResponse(rsp)
+func (c *ClientWithResponses) GetCompanyActivityWithResponse(ctx context.Context, params *GetCompanyActivityParams, reqEditors ...RequestEditorFn) (*GetCompanyActivityResponse, error) {
+	rsp, err := c.GetCompanyActivity(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCompanyActivityResponse(rsp)
 }
-
-
-
-
-
 
 // GetCustomFieldsWithResponse request returning *GetCustomFieldsResponse
-func (c *ClientWithResponses) GetCustomFieldsWithResponse(ctx context.Context, params *GetCustomFieldsParams, reqEditors... RequestEditorFn) (*GetCustomFieldsResponse, error){
-    rsp, err := c.GetCustomFields(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetCustomFieldsResponse(rsp)
+func (c *ClientWithResponses) GetCustomFieldsWithResponse(ctx context.Context, params *GetCustomFieldsParams, reqEditors ...RequestEditorFn) (*GetCustomFieldsResponse, error) {
+	rsp, err := c.GetCustomFields(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetCustomFieldsResponse(rsp)
 }
-
-
-
-
-
 
 // GetDepartmentsWithResponse request returning *GetDepartmentsResponse
-func (c *ClientWithResponses) GetDepartmentsWithResponse(ctx context.Context, params *GetDepartmentsParams, reqEditors... RequestEditorFn) (*GetDepartmentsResponse, error){
-    rsp, err := c.GetDepartments(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetDepartmentsResponse(rsp)
+func (c *ClientWithResponses) GetDepartmentsWithResponse(ctx context.Context, params *GetDepartmentsParams, reqEditors ...RequestEditorFn) (*GetDepartmentsResponse, error) {
+	rsp, err := c.GetDepartments(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetDepartmentsResponse(rsp)
 }
-
-
-
-
-
 
 // GetEmployeesWithResponse request returning *GetEmployeesResponse
-func (c *ClientWithResponses) GetEmployeesWithResponse(ctx context.Context, params *GetEmployeesParams, reqEditors... RequestEditorFn) (*GetEmployeesResponse, error){
-    rsp, err := c.GetEmployees(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetEmployeesResponse(rsp)
+func (c *ClientWithResponses) GetEmployeesWithResponse(ctx context.Context, params *GetEmployeesParams, reqEditors ...RequestEditorFn) (*GetEmployeesResponse, error) {
+	rsp, err := c.GetEmployees(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEmployeesResponse(rsp)
 }
-
-
-
-
-
 
 // GetEmployeesIncludeTerminatedWithResponse request returning *GetEmployeesIncludeTerminatedResponse
-func (c *ClientWithResponses) GetEmployeesIncludeTerminatedWithResponse(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors... RequestEditorFn) (*GetEmployeesIncludeTerminatedResponse, error){
-    rsp, err := c.GetEmployeesIncludeTerminated(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetEmployeesIncludeTerminatedResponse(rsp)
+func (c *ClientWithResponses) GetEmployeesIncludeTerminatedWithResponse(ctx context.Context, params *GetEmployeesIncludeTerminatedParams, reqEditors ...RequestEditorFn) (*GetEmployeesIncludeTerminatedResponse, error) {
+	rsp, err := c.GetEmployeesIncludeTerminated(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEmployeesIncludeTerminatedResponse(rsp)
 }
-
-
-
-
-
 
 // GetEmployeesEmployeeIdWithResponse request returning *GetEmployeesEmployeeIdResponse
-func (c *ClientWithResponses) GetEmployeesEmployeeIdWithResponse(ctx context.Context, employeeId EmployeeId, reqEditors... RequestEditorFn) (*GetEmployeesEmployeeIdResponse, error){
-    rsp, err := c.GetEmployeesEmployeeId(ctx, employeeId, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetEmployeesEmployeeIdResponse(rsp)
+func (c *ClientWithResponses) GetEmployeesEmployeeIdWithResponse(ctx context.Context, employeeId EmployeeId, reqEditors ...RequestEditorFn) (*GetEmployeesEmployeeIdResponse, error) {
+	rsp, err := c.GetEmployeesEmployeeId(ctx, employeeId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetEmployeesEmployeeIdResponse(rsp)
 }
-
-
-
-
-
 
 // GetGroupsWithResponse request returning *GetGroupsResponse
-func (c *ClientWithResponses) GetGroupsWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetGroupsResponse, error){
-    rsp, err := c.GetGroups(ctx, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetGroupsResponse(rsp)
+func (c *ClientWithResponses) GetGroupsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetGroupsResponse, error) {
+	rsp, err := c.GetGroups(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetGroupsResponse(rsp)
 }
-
-
-
-
-
 
 // PostGroupsWithBodyWithResponse request with arbitrary body returning *PostGroupsResponse
-func (c *ClientWithResponses) PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PostGroupsResponse, error){
-    rsp, err := c.PostGroupsWithBody(ctx, contentType, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePostGroupsResponse(rsp)
+func (c *ClientWithResponses) PostGroupsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error) {
+	rsp, err := c.PostGroupsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostGroupsResponse(rsp)
 }
 
-
-func (c *ClientWithResponses) PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors... RequestEditorFn) (*PostGroupsResponse, error) {
-    rsp, err := c.PostGroups(ctx, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePostGroupsResponse(rsp)
+func (c *ClientWithResponses) PostGroupsWithResponse(ctx context.Context, body PostGroupsJSONRequestBody, reqEditors ...RequestEditorFn) (*PostGroupsResponse, error) {
+	rsp, err := c.PostGroups(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostGroupsResponse(rsp)
 }
-
-
-
-
 
 // DeleteGroupsGroupIdWithResponse request returning *DeleteGroupsGroupIdResponse
-func (c *ClientWithResponses) DeleteGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, reqEditors... RequestEditorFn) (*DeleteGroupsGroupIdResponse, error){
-    rsp, err := c.DeleteGroupsGroupId(ctx, groupId, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseDeleteGroupsGroupIdResponse(rsp)
+func (c *ClientWithResponses) DeleteGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, reqEditors ...RequestEditorFn) (*DeleteGroupsGroupIdResponse, error) {
+	rsp, err := c.DeleteGroupsGroupId(ctx, groupId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseDeleteGroupsGroupIdResponse(rsp)
 }
-
-
-
-
-
 
 // PatchGroupsGroupIdWithBodyWithResponse request with arbitrary body returning *PatchGroupsGroupIdResponse
-func (c *ClientWithResponses) PatchGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PatchGroupsGroupIdResponse, error){
-    rsp, err := c.PatchGroupsGroupIdWithBody(ctx, groupId, contentType, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePatchGroupsGroupIdResponse(rsp)
+func (c *ClientWithResponses) PatchGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PatchGroupsGroupIdResponse, error) {
+	rsp, err := c.PatchGroupsGroupIdWithBody(ctx, groupId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchGroupsGroupIdResponse(rsp)
 }
 
-
-func (c *ClientWithResponses) PatchGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*PatchGroupsGroupIdResponse, error) {
-    rsp, err := c.PatchGroupsGroupId(ctx, groupId, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePatchGroupsGroupIdResponse(rsp)
+func (c *ClientWithResponses) PatchGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PatchGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PatchGroupsGroupIdResponse, error) {
+	rsp, err := c.PatchGroupsGroupId(ctx, groupId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePatchGroupsGroupIdResponse(rsp)
 }
-
-
-
-
 
 // PutGroupsGroupIdWithBodyWithResponse request with arbitrary body returning *PutGroupsGroupIdResponse
-func (c *ClientWithResponses) PutGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors... RequestEditorFn) (*PutGroupsGroupIdResponse, error){
-    rsp, err := c.PutGroupsGroupIdWithBody(ctx, groupId, contentType, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePutGroupsGroupIdResponse(rsp)
+func (c *ClientWithResponses) PutGroupsGroupIdWithBodyWithResponse(ctx context.Context, groupId GroupId, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PutGroupsGroupIdResponse, error) {
+	rsp, err := c.PutGroupsGroupIdWithBody(ctx, groupId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutGroupsGroupIdResponse(rsp)
 }
 
-
-func (c *ClientWithResponses) PutGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors... RequestEditorFn) (*PutGroupsGroupIdResponse, error) {
-    rsp, err := c.PutGroupsGroupId(ctx, groupId, body, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePutGroupsGroupIdResponse(rsp)
+func (c *ClientWithResponses) PutGroupsGroupIdWithResponse(ctx context.Context, groupId GroupId, body PutGroupsGroupIdJSONRequestBody, reqEditors ...RequestEditorFn) (*PutGroupsGroupIdResponse, error) {
+	rsp, err := c.PutGroupsGroupId(ctx, groupId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePutGroupsGroupIdResponse(rsp)
 }
-
-
-
-
 
 // GetLeaveRequestsWithResponse request returning *GetLeaveRequestsResponse
-func (c *ClientWithResponses) GetLeaveRequestsWithResponse(ctx context.Context, params *GetLeaveRequestsParams, reqEditors... RequestEditorFn) (*GetLeaveRequestsResponse, error){
-    rsp, err := c.GetLeaveRequests(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetLeaveRequestsResponse(rsp)
+func (c *ClientWithResponses) GetLeaveRequestsWithResponse(ctx context.Context, params *GetLeaveRequestsParams, reqEditors ...RequestEditorFn) (*GetLeaveRequestsResponse, error) {
+	rsp, err := c.GetLeaveRequests(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLeaveRequestsResponse(rsp)
 }
-
-
-
-
-
 
 // ProcessLeaveRequestsWithResponse request returning *ProcessLeaveRequestsResponse
-func (c *ClientWithResponses) ProcessLeaveRequestsWithResponse(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors... RequestEditorFn) (*ProcessLeaveRequestsResponse, error){
-    rsp, err := c.ProcessLeaveRequests(ctx, id, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseProcessLeaveRequestsResponse(rsp)
+func (c *ClientWithResponses) ProcessLeaveRequestsWithResponse(ctx context.Context, id string, params *ProcessLeaveRequestsParams, reqEditors ...RequestEditorFn) (*ProcessLeaveRequestsResponse, error) {
+	rsp, err := c.ProcessLeaveRequests(ctx, id, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseProcessLeaveRequestsResponse(rsp)
 }
-
-
-
-
-
 
 // GetLevelsWithResponse request returning *GetLevelsResponse
-func (c *ClientWithResponses) GetLevelsWithResponse(ctx context.Context, params *GetLevelsParams, reqEditors... RequestEditorFn) (*GetLevelsResponse, error){
-    rsp, err := c.GetLevels(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetLevelsResponse(rsp)
+func (c *ClientWithResponses) GetLevelsWithResponse(ctx context.Context, params *GetLevelsParams, reqEditors ...RequestEditorFn) (*GetLevelsResponse, error) {
+	rsp, err := c.GetLevels(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLevelsResponse(rsp)
 }
-
-
-
-
-
 
 // PostMarkAppInstalledWithResponse request returning *PostMarkAppInstalledResponse
-func (c *ClientWithResponses) PostMarkAppInstalledWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*PostMarkAppInstalledResponse, error){
-    rsp, err := c.PostMarkAppInstalled(ctx, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParsePostMarkAppInstalledResponse(rsp)
+func (c *ClientWithResponses) PostMarkAppInstalledWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*PostMarkAppInstalledResponse, error) {
+	rsp, err := c.PostMarkAppInstalled(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePostMarkAppInstalledResponse(rsp)
 }
-
-
-
-
-
 
 // GetMeWithResponse request returning *GetMeResponse
-func (c *ClientWithResponses) GetMeWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetMeResponse, error){
-    rsp, err := c.GetMe(ctx, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetMeResponse(rsp)
+func (c *ClientWithResponses) GetMeWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetMeResponse, error) {
+	rsp, err := c.GetMe(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetMeResponse(rsp)
 }
-
-
-
-
-
 
 // GetSamlIdpMetadataWithResponse request returning *GetSamlIdpMetadataResponse
-func (c *ClientWithResponses) GetSamlIdpMetadataWithResponse(ctx context.Context, reqEditors... RequestEditorFn) (*GetSamlIdpMetadataResponse, error){
-    rsp, err := c.GetSamlIdpMetadata(ctx, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetSamlIdpMetadataResponse(rsp)
+func (c *ClientWithResponses) GetSamlIdpMetadataWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetSamlIdpMetadataResponse, error) {
+	rsp, err := c.GetSamlIdpMetadata(ctx, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetSamlIdpMetadataResponse(rsp)
 }
-
-
-
-
-
 
 // GetTeamsWithResponse request returning *GetTeamsResponse
-func (c *ClientWithResponses) GetTeamsWithResponse(ctx context.Context, params *GetTeamsParams, reqEditors... RequestEditorFn) (*GetTeamsResponse, error){
-    rsp, err := c.GetTeams(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetTeamsResponse(rsp)
+func (c *ClientWithResponses) GetTeamsWithResponse(ctx context.Context, params *GetTeamsParams, reqEditors ...RequestEditorFn) (*GetTeamsResponse, error) {
+	rsp, err := c.GetTeams(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetTeamsResponse(rsp)
 }
-
-
-
-
-
 
 // GetWorkLocationsWithResponse request returning *GetWorkLocationsResponse
-func (c *ClientWithResponses) GetWorkLocationsWithResponse(ctx context.Context, params *GetWorkLocationsParams, reqEditors... RequestEditorFn) (*GetWorkLocationsResponse, error){
-    rsp, err := c.GetWorkLocations(ctx, params, reqEditors...)
-    if err != nil {
-        return nil, err
-    }
-    return ParseGetWorkLocationsResponse(rsp)
+func (c *ClientWithResponses) GetWorkLocationsWithResponse(ctx context.Context, params *GetWorkLocationsParams, reqEditors ...RequestEditorFn) (*GetWorkLocationsResponse, error) {
+	rsp, err := c.GetWorkLocations(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetWorkLocationsResponse(rsp)
 }
-
-
-
-
-
-
-
 
 // ParsePostAtsCandidatesPushCandidateResponse parses an HTTP response from a PostAtsCandidatesPushCandidateWithResponse call
 func ParsePostAtsCandidatesPushCandidateResponse(rsp *http.Response) (*PostAtsCandidatesPushCandidateResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &PostAtsCandidatesPushCandidateResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &PostAtsCandidatesPushCandidateResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Candidate
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest Candidate
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetCompaniesResponse parses an HTTP response from a GetCompaniesWithResponse call
 func ParseGetCompaniesResponse(rsp *http.Response) (*GetCompaniesResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetCompaniesResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetCompaniesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Company
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest Company
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetCompanyActivityResponse parses an HTTP response from a GetCompanyActivityWithResponse call
 func ParseGetCompanyActivityResponse(rsp *http.Response) (*GetCompanyActivityResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetCompanyActivityResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetCompanyActivityResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Data *struct {
+				Events *[]Event `json:"events"`
+				Next   *string  `json:"next,omitempty"`
+			} `json:"data"`
+			Error *string `json:"error"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest struct {
-    Data *struct {
-    Events *[]Event`json:"events"`
-    Next *string`json:"next,omitempty"`
-}`json:"data"`
-    Error *string`json:"error"`
-}
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetCustomFieldsResponse parses an HTTP response from a GetCustomFieldsWithResponse call
 func ParseGetCustomFieldsResponse(rsp *http.Response) (*GetCustomFieldsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetCustomFieldsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetCustomFieldsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []CustomFields
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []CustomFields
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetDepartmentsResponse parses an HTTP response from a GetDepartmentsWithResponse call
 func ParseGetDepartmentsResponse(rsp *http.Response) (*GetDepartmentsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetDepartmentsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetDepartmentsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Department
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Department
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetEmployeesResponse parses an HTTP response from a GetEmployeesWithResponse call
 func ParseGetEmployeesResponse(rsp *http.Response) (*GetEmployeesResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetEmployeesResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetEmployeesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Employee
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Employee
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetEmployeesIncludeTerminatedResponse parses an HTTP response from a GetEmployeesIncludeTerminatedWithResponse call
 func ParseGetEmployeesIncludeTerminatedResponse(rsp *http.Response) (*GetEmployeesIncludeTerminatedResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetEmployeesIncludeTerminatedResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetEmployeesIncludeTerminatedResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Employee
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Employee
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetEmployeesEmployeeIdResponse parses an HTTP response from a GetEmployeesEmployeeIdWithResponse call
 func ParseGetEmployeesEmployeeIdResponse(rsp *http.Response) (*GetEmployeesEmployeeIdResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetEmployeesEmployeeIdResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetEmployeesEmployeeIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Employee
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest Employee
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetGroupsResponse parses an HTTP response from a GetGroupsWithResponse call
 func ParseGetGroupsResponse(rsp *http.Response) (*GetGroupsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetGroupsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetGroupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Group
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Group
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParsePostGroupsResponse parses an HTTP response from a PostGroupsWithResponse call
 func ParsePostGroupsResponse(rsp *http.Response) (*PostGroupsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &PostGroupsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &PostGroupsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
+		var dest Group
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON201 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 201:
-var dest Group
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON201 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseDeleteGroupsGroupIdResponse parses an HTTP response from a DeleteGroupsGroupIdWithResponse call
 func ParseDeleteGroupsGroupIdResponse(rsp *http.Response) (*DeleteGroupsGroupIdResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &DeleteGroupsGroupIdResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &DeleteGroupsGroupIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	return response, nil
 }
-
-    
-
-    return response, nil
-}
-
 
 // ParsePatchGroupsGroupIdResponse parses an HTTP response from a PatchGroupsGroupIdWithResponse call
 func ParsePatchGroupsGroupIdResponse(rsp *http.Response) (*PatchGroupsGroupIdResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &PatchGroupsGroupIdResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &PatchGroupsGroupIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Group
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest Group
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParsePutGroupsGroupIdResponse parses an HTTP response from a PutGroupsGroupIdWithResponse call
 func ParsePutGroupsGroupIdResponse(rsp *http.Response) (*PutGroupsGroupIdResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &PutGroupsGroupIdResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &PutGroupsGroupIdResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Group
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest Group
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetLeaveRequestsResponse parses an HTTP response from a GetLeaveRequestsWithResponse call
 func ParseGetLeaveRequestsResponse(rsp *http.Response) (*GetLeaveRequestsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetLeaveRequestsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetLeaveRequestsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []LeaveRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []LeaveRequest
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseProcessLeaveRequestsResponse parses an HTTP response from a ProcessLeaveRequestsWithResponse call
 func ParseProcessLeaveRequestsResponse(rsp *http.Response) (*ProcessLeaveRequestsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &ProcessLeaveRequestsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &ProcessLeaveRequestsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest LeaveRequest
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest LeaveRequest
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetLevelsResponse parses an HTTP response from a GetLevelsWithResponse call
 func ParseGetLevelsResponse(rsp *http.Response) (*GetLevelsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetLevelsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetLevelsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Level
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Level
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParsePostMarkAppInstalledResponse parses an HTTP response from a PostMarkAppInstalledWithResponse call
 func ParsePostMarkAppInstalledResponse(rsp *http.Response) (*PostMarkAppInstalledResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &PostMarkAppInstalledResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &PostMarkAppInstalledResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest struct {
+			Ok bool `json:"ok"`
+		}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest struct {
-    Ok bool`json:"ok"`
-}
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetMeResponse parses an HTTP response from a GetMeWithResponse call
 func ParseGetMeResponse(rsp *http.Response) (*GetMeResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetMeResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetMeResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AuthenticatedUserMe
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest AuthenticatedUserMe
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetSamlIdpMetadataResponse parses an HTTP response from a GetSamlIdpMetadataWithResponse call
 func ParseGetSamlIdpMetadataResponse(rsp *http.Response) (*GetSamlIdpMetadataResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetSamlIdpMetadataResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetSamlIdpMetadataResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
+		var dest string
+		if err := xml.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.XML200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "xml") && rsp.StatusCode == 200:
-var dest string
-if err := xml.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.XML200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetTeamsResponse parses an HTTP response from a GetTeamsWithResponse call
 func ParseGetTeamsResponse(rsp *http.Response) (*GetTeamsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetTeamsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetTeamsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Team
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []Team
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ParseGetWorkLocationsResponse parses an HTTP response from a GetWorkLocationsWithResponse call
 func ParseGetWorkLocationsResponse(rsp *http.Response) (*GetWorkLocationsResponse, error) {
-    bodyBytes, err := ioutil.ReadAll(rsp.Body)
-    defer func() { _ = rsp.Body.Close() }()
-    if err != nil {
-        return nil, err
-    }
+	bodyBytes, err := ioutil.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
 
-    response := &GetWorkLocationsResponse{
-Body: bodyBytes,
-HTTPResponse: rsp,
+	response := &GetWorkLocationsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []WorkLocation
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
-
-    switch {
-case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-var dest []WorkLocation
-if err := json.Unmarshal(bodyBytes, &dest); err != nil { 
- return nil, err 
-}
-response.JSON200 = &dest
-
-}
-
-
-    return response, nil
-}
-
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
-// POST New Candidate
-// (POST /ats_candidates/push_candidate)
-PostAtsCandidatesPushCandidate(w http.ResponseWriter, r *http.Request)
-// GET Current Company
-// (GET /companies/current)
-GetCompanies(w http.ResponseWriter, r *http.Request)
-// GET Company Activity
-// (GET /company_activity)
-GetCompanyActivity(w http.ResponseWriter, r *http.Request, params GetCompanyActivityParams)
-// GET Custom Fields
-// (GET /custom_fields)
-GetCustomFields(w http.ResponseWriter, r *http.Request, params GetCustomFieldsParams)
-// GET Departments
-// (GET /departments)
-GetDepartments(w http.ResponseWriter, r *http.Request, params GetDepartmentsParams)
-// GET Employees
-// (GET /employees)
-GetEmployees(w http.ResponseWriter, r *http.Request, params GetEmployeesParams)
-// GET Employees (Including Terminated)
-// (GET /employees/include_terminated)
-GetEmployeesIncludeTerminated(w http.ResponseWriter, r *http.Request, params GetEmployeesIncludeTerminatedParams)
-// GET Employee
-// (GET /employees/{employeeId})
-GetEmployeesEmployeeId(w http.ResponseWriter, r *http.Request, employeeId EmployeeId)
-// GET Groups
-// (GET /groups)
-GetGroups(w http.ResponseWriter, r *http.Request)
-// POST Groups
-// (POST /groups)
-PostGroups(w http.ResponseWriter, r *http.Request)
-// DELETE Group
-// (DELETE /groups/{groupId})
-DeleteGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
-// PATCH Group
-// (PATCH /groups/{groupId})
-PatchGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
-// PUT Group
-// (PUT /groups/{groupId})
-PutGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
-// GET Leave Requests
-// (GET /leave_requests)
-GetLeaveRequests(w http.ResponseWriter, r *http.Request, params GetLeaveRequestsParams)
-// POST Process Leave Request
-// (POST /leave_requests/{id}/process)
-ProcessLeaveRequests(w http.ResponseWriter, r *http.Request, id string, params ProcessLeaveRequestsParams)
-// GET Levels
-// (GET /levels)
-GetLevels(w http.ResponseWriter, r *http.Request, params GetLevelsParams)
-// Mark App Installed
-// (POST /mark_app_installed)
-PostMarkAppInstalled(w http.ResponseWriter, r *http.Request)
-// GET Current User
-// (GET /me)
-GetMe(w http.ResponseWriter, r *http.Request)
-// GET SAML Metadata
-// (GET /saml/idp_metadata)
-GetSamlIdpMetadata(w http.ResponseWriter, r *http.Request)
-// GET Teams
-// (GET /teams)
-GetTeams(w http.ResponseWriter, r *http.Request, params GetTeamsParams)
-// GET Work Locations
-// (GET /work_locations)
-GetWorkLocations(w http.ResponseWriter, r *http.Request, params GetWorkLocationsParams)
-
+	// POST New Candidate
+	// (POST /ats_candidates/push_candidate)
+	PostAtsCandidatesPushCandidate(w http.ResponseWriter, r *http.Request)
+	// GET Current Company
+	// (GET /companies/current)
+	GetCompanies(w http.ResponseWriter, r *http.Request)
+	// GET Company Activity
+	// (GET /company_activity)
+	GetCompanyActivity(w http.ResponseWriter, r *http.Request, params GetCompanyActivityParams)
+	// GET Custom Fields
+	// (GET /custom_fields)
+	GetCustomFields(w http.ResponseWriter, r *http.Request, params GetCustomFieldsParams)
+	// GET Departments
+	// (GET /departments)
+	GetDepartments(w http.ResponseWriter, r *http.Request, params GetDepartmentsParams)
+	// GET Employees
+	// (GET /employees)
+	GetEmployees(w http.ResponseWriter, r *http.Request, params GetEmployeesParams)
+	// GET Employees (Including Terminated)
+	// (GET /employees/include_terminated)
+	GetEmployeesIncludeTerminated(w http.ResponseWriter, r *http.Request, params GetEmployeesIncludeTerminatedParams)
+	// GET Employee
+	// (GET /employees/{employeeId})
+	GetEmployeesEmployeeId(w http.ResponseWriter, r *http.Request, employeeId EmployeeId)
+	// GET Groups
+	// (GET /groups)
+	GetGroups(w http.ResponseWriter, r *http.Request)
+	// POST Groups
+	// (POST /groups)
+	PostGroups(w http.ResponseWriter, r *http.Request)
+	// DELETE Group
+	// (DELETE /groups/{groupId})
+	DeleteGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
+	// PATCH Group
+	// (PATCH /groups/{groupId})
+	PatchGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
+	// PUT Group
+	// (PUT /groups/{groupId})
+	PutGroupsGroupId(w http.ResponseWriter, r *http.Request, groupId GroupId)
+	// GET Leave Requests
+	// (GET /leave_requests)
+	GetLeaveRequests(w http.ResponseWriter, r *http.Request, params GetLeaveRequestsParams)
+	// POST Process Leave Request
+	// (POST /leave_requests/{id}/process)
+	ProcessLeaveRequests(w http.ResponseWriter, r *http.Request, id string, params ProcessLeaveRequestsParams)
+	// GET Levels
+	// (GET /levels)
+	GetLevels(w http.ResponseWriter, r *http.Request, params GetLevelsParams)
+	// Mark App Installed
+	// (POST /mark_app_installed)
+	PostMarkAppInstalled(w http.ResponseWriter, r *http.Request)
+	// GET Current User
+	// (GET /me)
+	GetMe(w http.ResponseWriter, r *http.Request)
+	// GET SAML Metadata
+	// (GET /saml/idp_metadata)
+	GetSamlIdpMetadata(w http.ResponseWriter, r *http.Request)
+	// GET Teams
+	// (GET /teams)
+	GetTeams(w http.ResponseWriter, r *http.Request, params GetTeamsParams)
+	// GET Work Locations
+	// (GET /work_locations)
+	GetWorkLocations(w http.ResponseWriter, r *http.Request, params GetWorkLocationsParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
 type ServerInterfaceWrapper struct {
-    Handler ServerInterface
-    HandlerMiddlewares []MiddlewareFunc
-    ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
+	Handler            ServerInterface
+	HandlerMiddlewares []MiddlewareFunc
+	ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 type MiddlewareFunc func(http.HandlerFunc) http.HandlerFunc
 
-
-
 // PostAtsCandidatesPushCandidate operation middleware
 func (siw *ServerInterfaceWrapper) PostAtsCandidatesPushCandidate(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"ats:candidates"})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostAtsCandidatesPushCandidate(w, r)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"ats:candidates"})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.PostAtsCandidatesPushCandidate(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetCompanies operation middleware
 func (siw *ServerInterfaceWrapper) GetCompanies(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:*"})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCompanies(w, r)
+	}
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:*"})
-
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetCompanies(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetCompanyActivity operation middleware
 func (siw *ServerInterfaceWrapper) GetCompanyActivity(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:activity"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCompanyActivityParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:activity"})
+	// ------------- Optional query parameter "startDate" -------------
+	if paramValue := r.URL.Query().Get("startDate"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetCompanyActivityParams
+	err = runtime.BindQueryParameter("form", true, false, "startDate", r.URL.Query(), &params.StartDate)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startDate", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "startDate" -------------
-      if paramValue := r.URL.Query().Get("startDate"); paramValue != "" {
+	// ------------- Optional query parameter "endDate" -------------
+	if paramValue := r.URL.Query().Get("endDate"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "startDate", r.URL.Query(), &params.StartDate)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startDate", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "endDate" -------------
-      if paramValue := r.URL.Query().Get("endDate"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "endDate", r.URL.Query(), &params.EndDate)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "endDate", Err: err})
+		return
+	}
 
-      
+	// ------------- Optional query parameter "next" -------------
+	if paramValue := r.URL.Query().Get("next"); paramValue != "" {
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "endDate", r.URL.Query(), &params.EndDate)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "endDate", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "next" -------------
-      if paramValue := r.URL.Query().Get("next"); paramValue != "" {
+	}
 
-      
+	err = runtime.BindQueryParameter("form", true, false, "next", r.URL.Query(), &params.Next)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "next", Err: err})
+		return
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "next", r.URL.Query(), &params.Next)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "next", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCompanyActivity(w, r, params)
+	}
 
-    
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetCompanyActivity(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetCustomFields operation middleware
 func (siw *ServerInterfaceWrapper) GetCustomFields(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:customFields"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetCustomFieldsParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:customFields"})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetCustomFieldsParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetCustomFields(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetCustomFields(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetDepartments operation middleware
 func (siw *ServerInterfaceWrapper) GetDepartments(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:departments"})
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:departments"})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetDepartmentsParams
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetDepartmentsParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDepartments(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetDepartments(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetEmployees operation middleware
 func (siw *ServerInterfaceWrapper) GetEmployees(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetEmployeesParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetEmployeesParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEmployees(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetEmployees(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetEmployeesIncludeTerminated operation middleware
 func (siw *ServerInterfaceWrapper) GetEmployeesIncludeTerminated(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetEmployeesIncludeTerminatedParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetEmployeesIncludeTerminatedParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	// ------------- Optional query parameter "EIN" -------------
+	if paramValue := r.URL.Query().Get("EIN"); paramValue != "" {
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "EIN" -------------
-      if paramValue := r.URL.Query().Get("EIN"); paramValue != "" {
+	}
 
-      
+	err = runtime.BindQueryParameter("form", true, false, "EIN", r.URL.Query(), &params.EIN)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "EIN", Err: err})
+		return
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "EIN", r.URL.Query(), &params.EIN)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "EIN", Err: err})
-        return
-      }
-      
-  
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEmployeesIncludeTerminated(w, r, params)
+	}
 
-    
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetEmployeesIncludeTerminated(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetEmployeesEmployeeId operation middleware
 func (siw *ServerInterfaceWrapper) GetEmployeesEmployeeId(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  // ------------- Path parameter "employeeId" -------------
-  var employeeId EmployeeId
+	var err error
 
-  
-  
-  
-  err = runtime.BindStyledParameter("simple",false, "employeeId", chi.URLParam(r, "employeeId"), &employeeId)
-  if err != nil {
-    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "employeeId", Err: err})
-    return
-  }
-  
+	// ------------- Path parameter "employeeId" -------------
+	var employeeId EmployeeId
 
-  
+	err = runtime.BindStyledParameter("simple", false, "employeeId", chi.URLParam(r, "employeeId"), &employeeId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "employeeId", Err: err})
+		return
+	}
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetEmployeesEmployeeId(w, r, employeeId)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"employee"})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetEmployeesEmployeeId(w, r, employeeId)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetGroups operation middleware
 func (siw *ServerInterfaceWrapper) GetGroups(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:read", "groups:read"})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetGroups(w, r)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:read","groups:read"})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetGroups(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // PostGroups operation middleware
 func (siw *ServerInterfaceWrapper) PostGroups(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"groups:write", "group_members:write"})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostGroups(w, r)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"groups:write","group_members:write"})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.PostGroups(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // DeleteGroupsGroupId operation middleware
 func (siw *ServerInterfaceWrapper) DeleteGroupsGroupId(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  // ------------- Path parameter "groupId" -------------
-  var groupId GroupId
+	var err error
 
-  
-  
-  
-  err = runtime.BindStyledParameter("simple",false, "groupId", chi.URLParam(r, "groupId"), &groupId)
-  if err != nil {
-    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
-    return
-  }
-  
+	// ------------- Path parameter "groupId" -------------
+	var groupId GroupId
 
-  
+	err = runtime.BindStyledParameter("simple", false, "groupId", chi.URLParam(r, "groupId"), &groupId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
+		return
+	}
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"groups:write"})
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"groups:write"})
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteGroupsGroupId(w, r, groupId)
+	}
 
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.DeleteGroupsGroupId(w, r, groupId)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // PatchGroupsGroupId operation middleware
 func (siw *ServerInterfaceWrapper) PatchGroupsGroupId(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  // ------------- Path parameter "groupId" -------------
-  var groupId GroupId
+	var err error
 
-  
-  
-  
-  err = runtime.BindStyledParameter("simple",false, "groupId", chi.URLParam(r, "groupId"), &groupId)
-  if err != nil {
-    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
-    return
-  }
-  
+	// ------------- Path parameter "groupId" -------------
+	var groupId GroupId
 
-  
+	err = runtime.BindStyledParameter("simple", false, "groupId", chi.URLParam(r, "groupId"), &groupId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
+		return
+	}
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:write", "groups:write"})
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:write","groups:write"})
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PatchGroupsGroupId(w, r, groupId)
+	}
 
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.PatchGroupsGroupId(w, r, groupId)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // PutGroupsGroupId operation middleware
 func (siw *ServerInterfaceWrapper) PutGroupsGroupId(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  // ------------- Path parameter "groupId" -------------
-  var groupId GroupId
+	var err error
 
-  
-  
-  
-  err = runtime.BindStyledParameter("simple",false, "groupId", chi.URLParam(r, "groupId"), &groupId)
-  if err != nil {
-    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
-    return
-  }
-  
+	// ------------- Path parameter "groupId" -------------
+	var groupId GroupId
 
-  
+	err = runtime.BindStyledParameter("simple", false, "groupId", chi.URLParam(r, "groupId"), &groupId)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "groupId", Err: err})
+		return
+	}
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:write", "groups:write"})
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"group_members:write","groups:write"})
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutGroupsGroupId(w, r, groupId)
+	}
 
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.PutGroupsGroupId(w, r, groupId)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetLeaveRequests operation middleware
 func (siw *ServerInterfaceWrapper) GetLeaveRequests(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:leave_requests"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLeaveRequestsParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:leave_requests"})
+	// ------------- Optional query parameter "id" -------------
+	if paramValue := r.URL.Query().Get("id"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetLeaveRequestsParams
+	err = runtime.BindQueryParameter("form", true, false, "id", r.URL.Query(), &params.Id)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "id" -------------
-      if paramValue := r.URL.Query().Get("id"); paramValue != "" {
+	// ------------- Optional query parameter "role" -------------
+	if paramValue := r.URL.Query().Get("role"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "id", r.URL.Query(), &params.Id)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "role" -------------
-      if paramValue := r.URL.Query().Get("role"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "role", r.URL.Query(), &params.Role)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
+		return
+	}
 
-      
+	// ------------- Optional query parameter "requestedBy" -------------
+	if paramValue := r.URL.Query().Get("requestedBy"); paramValue != "" {
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "role", r.URL.Query(), &params.Role)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "requestedBy" -------------
-      if paramValue := r.URL.Query().Get("requestedBy"); paramValue != "" {
+	}
 
-      
+	err = runtime.BindQueryParameter("form", true, false, "requestedBy", r.URL.Query(), &params.RequestedBy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "requestedBy", Err: err})
+		return
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "requestedBy", r.URL.Query(), &params.RequestedBy)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "requestedBy", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "status" -------------
-      if paramValue := r.URL.Query().Get("status"); paramValue != "" {
+	// ------------- Optional query parameter "status" -------------
+	if paramValue := r.URL.Query().Get("status"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "startDate" -------------
-      if paramValue := r.URL.Query().Get("startDate"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "status", r.URL.Query(), &params.Status)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		return
+	}
 
-      
+	// ------------- Optional query parameter "startDate" -------------
+	if paramValue := r.URL.Query().Get("startDate"); paramValue != "" {
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "startDate", r.URL.Query(), &params.StartDate)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startDate", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "endDate" -------------
-      if paramValue := r.URL.Query().Get("endDate"); paramValue != "" {
+	}
 
-      
+	err = runtime.BindQueryParameter("form", true, false, "startDate", r.URL.Query(), &params.StartDate)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startDate", Err: err})
+		return
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "endDate", r.URL.Query(), &params.EndDate)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "endDate", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "leavePolicy" -------------
-      if paramValue := r.URL.Query().Get("leavePolicy"); paramValue != "" {
+	// ------------- Optional query parameter "endDate" -------------
+	if paramValue := r.URL.Query().Get("endDate"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "leavePolicy", r.URL.Query(), &params.LeavePolicy)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "leavePolicy", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "processedBy" -------------
-      if paramValue := r.URL.Query().Get("processedBy"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "endDate", r.URL.Query(), &params.EndDate)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "endDate", Err: err})
+		return
+	}
 
-      
+	// ------------- Optional query parameter "leavePolicy" -------------
+	if paramValue := r.URL.Query().Get("leavePolicy"); paramValue != "" {
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "processedBy", r.URL.Query(), &params.ProcessedBy)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "processedBy", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "from" -------------
-      if paramValue := r.URL.Query().Get("from"); paramValue != "" {
+	}
 
-      
+	err = runtime.BindQueryParameter("form", true, false, "leavePolicy", r.URL.Query(), &params.LeavePolicy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "leavePolicy", Err: err})
+		return
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "to" -------------
-      if paramValue := r.URL.Query().Get("to"); paramValue != "" {
+	// ------------- Optional query parameter "processedBy" -------------
+	if paramValue := r.URL.Query().Get("processedBy"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
-        return
-      }
-      
-  
+	err = runtime.BindQueryParameter("form", true, false, "processedBy", r.URL.Query(), &params.ProcessedBy)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "processedBy", Err: err})
+		return
+	}
 
-    
+	// ------------- Optional query parameter "from" -------------
+	if paramValue := r.URL.Query().Get("from"); paramValue != "" {
 
-    
-  
+	}
 
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetLeaveRequests(w, r, params)
+	err = runtime.BindQueryParameter("form", true, false, "from", r.URL.Query(), &params.From)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+	if paramValue := r.URL.Query().Get("to"); paramValue != "" {
+
+	}
+
+	err = runtime.BindQueryParameter("form", true, false, "to", r.URL.Query(), &params.To)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		return
+	}
+
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLeaveRequests(w, r, params)
+	}
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // ProcessLeaveRequests operation middleware
 func (siw *ServerInterfaceWrapper) ProcessLeaveRequests(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  // ------------- Path parameter "id" -------------
-  var id string
+	var err error
 
-  
-  
-  
-  err = runtime.BindStyledParameter("simple",false, "id", chi.URLParam(r, "id"), &id)
-  if err != nil {
-    siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
-    return
-  }
-  
+	// ------------- Path parameter "id" -------------
+	var id string
 
-  
+	err = runtime.BindStyledParameter("simple", false, "id", chi.URLParam(r, "id"), &id)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company:leave_requests"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ProcessLeaveRequestsParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company:leave_requests"})
+	// ------------- Required query parameter "action" -------------
+	if paramValue := r.URL.Query().Get("action"); paramValue != "" {
 
+	} else {
+		siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "action"})
+		return
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params ProcessLeaveRequestsParams
+	err = runtime.BindQueryParameter("form", true, true, "action", r.URL.Query(), &params.Action)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
+		return
+	}
 
-    // ------------- Required query parameter "action" -------------
-      if paramValue := r.URL.Query().Get("action"); paramValue != "" {
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ProcessLeaveRequests(w, r, id, params)
+	}
 
-      
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-      
-      } else {
-          siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "action"})
-          return
-      }
-      
-      err = runtime.BindQueryParameter("form", true, true, "action", r.URL.Query(), &params.Action)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "action", Err: err})
-        return
-      }
-      
-  
-
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.ProcessLeaveRequests(w, r, id, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetLevels operation middleware
 func (siw *ServerInterfaceWrapper) GetLevels(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:levels"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetLevelsParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:levels"})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetLevelsParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetLevels(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetLevels(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // PostMarkAppInstalled operation middleware
 func (siw *ServerInterfaceWrapper) PostMarkAppInstalled(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{""})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PostMarkAppInstalled(w, r)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{""})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.PostMarkAppInstalled(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetMe operation middleware
 func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{""})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMe(w, r)
+	}
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{""})
-
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetMe(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetSamlIdpMetadata operation middleware
 func (siw *ServerInterfaceWrapper) GetSamlIdpMetadata(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
+	ctx := r.Context()
 
-  
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"saml:idp_metadata"})
 
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSamlIdpMetadata(w, r)
+	}
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"saml:idp_metadata"})
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetSamlIdpMetadata(w, r)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetTeams operation middleware
 func (siw *ServerInterfaceWrapper) GetTeams(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:teams"})
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetTeamsParams
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:teams"})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetTeamsParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTeams(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetTeams(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 // GetWorkLocations operation middleware
 func (siw *ServerInterfaceWrapper) GetWorkLocations(w http.ResponseWriter, r *http.Request) {
-  ctx := r.Context()
-  
-  var err error
-  
+	ctx := r.Context()
 
-  
+	var err error
 
+	ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company", "company:workLocations"})
 
-  ctx = context.WithValue(ctx, AuthorizationCodeScopes, []string{"company","company:workLocations"})
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetWorkLocationsParams
 
-  ctx = context.WithValue(ctx, Bearer ApiKeyScopes, []string{""})
+	// ------------- Optional query parameter "limit" -------------
+	if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
 
+	}
 
-  
-    // Parameter object where we will unmarshal all parameters from the context
-    var params GetWorkLocationsParams
+	err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		return
+	}
 
-    // ------------- Optional query parameter "limit" -------------
-      if paramValue := r.URL.Query().Get("limit"); paramValue != "" {
+	// ------------- Optional query parameter "offset" -------------
+	if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
 
-      
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "limit", r.URL.Query(), &params.Limit)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
-        return
-      }
-      
-  // ------------- Optional query parameter "offset" -------------
-      if paramValue := r.URL.Query().Get("offset"); paramValue != "" {
+	err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		return
+	}
 
-      
+	var handler = func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkLocations(w, r, params)
+	}
 
-      
-      }
-      
-      err = runtime.BindQueryParameter("form", true, false, "offset", r.URL.Query(), &params.Offset)
-      if err != nil {
-        siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
-        return
-      }
-      
-  
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
 
-    
-
-    
-  
-
-  var handler = func(w http.ResponseWriter, r *http.Request) {
-    siw.Handler.GetWorkLocations(w, r, params)
+	handler(w, r.WithContext(ctx))
 }
-
-  for _, middleware := range siw.HandlerMiddlewares {
-    handler = middleware(handler)
-  }
-
-  handler(w, r.WithContext(ctx))
-}
-
 
 type UnescapedCookieParamError struct {
-    ParamName string
-  	Err error
+	ParamName string
+	Err       error
 }
 
 func (e *UnescapedCookieParamError) Error() string {
-    return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
+	return fmt.Sprintf("error unescaping cookie parameter '%s'", e.ParamName)
 }
 
 func (e *UnescapedCookieParamError) Unwrap() error {
-    return e.Err
+	return e.Err
 }
 
 type UnmarshalingParamError struct {
-    ParamName string
-    Err error
+	ParamName string
+	Err       error
 }
 
 func (e *UnmarshalingParamError) Error() string {
-    return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
+	return fmt.Sprintf("Error unmarshaling parameter %s as JSON: %s", e.ParamName, e.Err.Error())
 }
 
 func (e *UnmarshalingParamError) Unwrap() error {
-    return e.Err
+	return e.Err
 }
 
 type RequiredParamError struct {
-    ParamName string
+	ParamName string
 }
 
 func (e *RequiredParamError) Error() string {
-    return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
+	return fmt.Sprintf("Query argument %s is required, but not found", e.ParamName)
 }
 
 type RequiredHeaderError struct {
-    ParamName string
-    Err error
+	ParamName string
+	Err       error
 }
 
 func (e *RequiredHeaderError) Error() string {
-    return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
+	return fmt.Sprintf("Header parameter %s is required, but not found", e.ParamName)
 }
 
 func (e *RequiredHeaderError) Unwrap() error {
-    return e.Err
+	return e.Err
 }
 
 type InvalidParamFormatError struct {
-    ParamName string
-	  Err error
+	ParamName string
+	Err       error
 }
 
 func (e *InvalidParamFormatError) Error() string {
-    return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
+	return fmt.Sprintf("Invalid format for parameter %s: %s", e.ParamName, e.Err.Error())
 }
 
 func (e *InvalidParamFormatError) Unwrap() error {
-    return e.Err
+	return e.Err
 }
 
 type TooManyValuesForParamError struct {
-    ParamName string
-    Count int
+	ParamName string
+	Count     int
 }
 
 func (e *TooManyValuesForParamError) Error() string {
-    return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
+	return fmt.Sprintf("Expected one value for %s, got %d", e.ParamName, e.Count)
 }
 
 // Handler creates http.Handler with routing matching OpenAPI spec.
 func Handler(si ServerInterface) http.Handler {
-  return HandlerWithOptions(si, ChiServerOptions{})
+	return HandlerWithOptions(si, ChiServerOptions{})
 }
 
 type ChiServerOptions struct {
-    BaseURL string
-    BaseRouter chi.Router
-    Middlewares []MiddlewareFunc
-    ErrorHandlerFunc   func(w http.ResponseWriter, r *http.Request, err error)
+	BaseURL          string
+	BaseRouter       chi.Router
+	Middlewares      []MiddlewareFunc
+	ErrorHandlerFunc func(w http.ResponseWriter, r *http.Request, err error)
 }
 
 // HandlerFromMux creates http.Handler with routing matching OpenAPI spec based on the provided mux.
 func HandlerFromMux(si ServerInterface, r chi.Router) http.Handler {
-    return HandlerWithOptions(si, ChiServerOptions {
-        BaseRouter: r,
-    })
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseRouter: r,
+	})
 }
 
 func HandlerFromMuxWithBaseURL(si ServerInterface, r chi.Router, baseURL string) http.Handler {
-    return HandlerWithOptions(si, ChiServerOptions {
-        BaseURL: baseURL,
-        BaseRouter: r,
-    })
+	return HandlerWithOptions(si, ChiServerOptions{
+		BaseURL:    baseURL,
+		BaseRouter: r,
+	})
 }
 
 // HandlerWithOptions creates http.Handler with additional options
 func HandlerWithOptions(si ServerInterface, options ChiServerOptions) http.Handler {
-r := options.BaseRouter
+	r := options.BaseRouter
 
-if r == nil {
-r = chi.NewRouter()
-}
-if options.ErrorHandlerFunc == nil {
-    options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
-        http.Error(w, err.Error(), http.StatusBadRequest)
-    }
-}
-wrapper := ServerInterfaceWrapper{
-Handler: si,
-HandlerMiddlewares: options.Middlewares,
-ErrorHandlerFunc: options.ErrorHandlerFunc,
+	if r == nil {
+		r = chi.NewRouter()
+	}
+	if options.ErrorHandlerFunc == nil {
+		options.ErrorHandlerFunc = func(w http.ResponseWriter, r *http.Request, err error) {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+		}
+	}
+	wrapper := ServerInterfaceWrapper{
+		Handler:            si,
+		HandlerMiddlewares: options.Middlewares,
+		ErrorHandlerFunc:   options.ErrorHandlerFunc,
+	}
+
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/ats_candidates/push_candidate", wrapper.PostAtsCandidatesPushCandidate)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/companies/current", wrapper.GetCompanies)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/company_activity", wrapper.GetCompanyActivity)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/custom_fields", wrapper.GetCustomFields)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/departments", wrapper.GetDepartments)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/employees", wrapper.GetEmployees)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/employees/include_terminated", wrapper.GetEmployeesIncludeTerminated)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/employees/{employeeId}", wrapper.GetEmployeesEmployeeId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/groups", wrapper.GetGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/groups", wrapper.PostGroups)
+	})
+	r.Group(func(r chi.Router) {
+		r.Delete(options.BaseURL+"/groups/{groupId}", wrapper.DeleteGroupsGroupId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Patch(options.BaseURL+"/groups/{groupId}", wrapper.PatchGroupsGroupId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Put(options.BaseURL+"/groups/{groupId}", wrapper.PutGroupsGroupId)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/leave_requests", wrapper.GetLeaveRequests)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/leave_requests/{id}/process", wrapper.ProcessLeaveRequests)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/levels", wrapper.GetLevels)
+	})
+	r.Group(func(r chi.Router) {
+		r.Post(options.BaseURL+"/mark_app_installed", wrapper.PostMarkAppInstalled)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/me", wrapper.GetMe)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/saml/idp_metadata", wrapper.GetSamlIdpMetadata)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/teams", wrapper.GetTeams)
+	})
+	r.Group(func(r chi.Router) {
+		r.Get(options.BaseURL+"/work_locations", wrapper.GetWorkLocations)
+	})
+
+	return r
 }
 
-r.Group(func(r chi.Router) {
-r.Post(options.BaseURL+"/ats_candidates/push_candidate", wrapper.PostAtsCandidatesPushCandidate)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/companies/current", wrapper.GetCompanies)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/company_activity", wrapper.GetCompanyActivity)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/custom_fields", wrapper.GetCustomFields)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/departments", wrapper.GetDepartments)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/employees", wrapper.GetEmployees)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/employees/include_terminated", wrapper.GetEmployeesIncludeTerminated)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/employees/{employeeId}", wrapper.GetEmployeesEmployeeId)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/groups", wrapper.GetGroups)
-})
-r.Group(func(r chi.Router) {
-r.Post(options.BaseURL+"/groups", wrapper.PostGroups)
-})
-r.Group(func(r chi.Router) {
-r.Delete(options.BaseURL+"/groups/{groupId}", wrapper.DeleteGroupsGroupId)
-})
-r.Group(func(r chi.Router) {
-r.Patch(options.BaseURL+"/groups/{groupId}", wrapper.PatchGroupsGroupId)
-})
-r.Group(func(r chi.Router) {
-r.Put(options.BaseURL+"/groups/{groupId}", wrapper.PutGroupsGroupId)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/leave_requests", wrapper.GetLeaveRequests)
-})
-r.Group(func(r chi.Router) {
-r.Post(options.BaseURL+"/leave_requests/{id}/process", wrapper.ProcessLeaveRequests)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/levels", wrapper.GetLevels)
-})
-r.Group(func(r chi.Router) {
-r.Post(options.BaseURL+"/mark_app_installed", wrapper.PostMarkAppInstalled)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/me", wrapper.GetMe)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/saml/idp_metadata", wrapper.GetSamlIdpMetadata)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/teams", wrapper.GetTeams)
-})
-r.Group(func(r chi.Router) {
-r.Get(options.BaseURL+"/work_locations", wrapper.GetWorkLocations)
-})
-
-return r
-}
 // Base64 encoded, gzipped, json marshaled Swagger object
 var swaggerSpec = []string{
 
-    "H4sIAAAAAAAC/+y9+3LbuJIw/ioozq8qmR3Z1s2W7K2p86Ml2VFiyY4kJ5OJU16IhCTEJMAQpGVlKlXn",
-    "Nbbq+17uPMlXuJEgReqSy86ZPWf+yFgE0AAa3Y1Go7vxh+VQP6AEkYhZZ39YAQyhjyIUil8IE/4/FzEn",
-    "xEGEKbHOrJ4feHSFQoBdRCI8ww7kJYDE/hSFFQA9RsEDoUsCIAPRAoEL5KIQekC0XKIQ9LMth6IloGGm",
-    "9gQ+FVc8tCoWH5j1KUbhyqpYBPqID6w/tCoWcxbIh3zY0SrgnzGJ0ByF1pcvFQvJsaO+uz6vW4I/xSiZ",
-    "FQrBTI1ItwJLHC0wASMcBB4m82QgAYwW6TiMTipWiD7FOESudRaFMdoyvHlI42C/sYkmOw5Mg99zVB72",
-    "cbQ+pjGKGIBAlAJKxGhCFMUhQS54hF6MWMlCSYBbeqWzGUMF3V6L72yP7hSkjf190aWC7m3XDRFj653b",
-    "BEBZBuj0I3IiTuIsoiFyi9aAxJ4Hpx7SaA5CGqAwwkiAdnC0MgbDohCTufWlYjk0JlFYXMYiGKGSkhCh",
-    "6AoTVNtSXi8s/4yDgu9fKlaEIz6FBCsVXUeiwKpYTwcRnDPr7L01oC7ymPXhS8Wy42jBydWBEXIPbhkK",
-    "D54P0M/rSO2TGQ19yeFwSuNIrK3GI4gZCsFyQRkCEX1ABGAGpkiVuCCiADoOXxHd4hkD9k2f4z+Hb+oH",
-    "kKx24S46E2NQLQ7TKafowsVsitwCOGIKzz38gLwVgJyGfEx+LgS7pOFDz4fYW4f+loYPAPEyE24BFHPN",
-    "ShahaA3RE/QDT+JqHAucZtBmHSPn+Pj0GM7gqdNEtVa9Xau1nemxJbGhy91MuVurWZlpWU6Ao+iX+v8f",
-    "ak5xqC8GXUhGHUhc7CqizyJkYpKJo+sBnzdeX34YRdBZ+HqnwxHySzg8DOGKo/gjo0TxOQMOJRHEhHc1",
-    "wx4CXLgwAIkLgnjqYUd+vR1dZaq61IlFl4CPRH2MqKQuPeL1sXJY91J8FU06GUAhCYnGcegVt1WjvR1d",
-    "icFzKHyuEATu7MilzhP/54i6kezla+ZSQI4ZYks/CFQLkafbF+1+fNhxKY8m6z4LqS8+2ZNxIWKcOAwR",
-    "cQokgA1kLTDDyHM1aDrDMwdDD+iGwKWIS3wPs4gzOgH98TVo1mutwv5cFMAw4igrnlNaLpcB8v1UNi+E",
-    "h4rlwsTEwjMmRUQJAK6Z8A4noqgIUm94OwC8JcdC2iCVY0vseWABHwvVIURinzNw53o4GdmdyfXIqlhj",
-    "+8oe9Xvd+5uJ+euC/3pxfTu6epf5W9Sa9AY31oeiOXyKcbQaL2CIWPEMiFInZ4CJWiBawEgOe4rAHD8i",
-    "solsE6WgYn2k04kUpNtw/pFOgZC5hXgv52QTRilDBwtKkNR9t0MRlRUOCqEx6MFwdYPCW4JLCdPBPvSk",
-    "WiXRl2W1OdfAAohdgB5RuAISJgcIIuwjLiAwdY3u5XjS7ov7tokkP8WMovsKcBGhkZA1XPRx1VXwIl/T",
-    "BXYWuaGxBY09l6+0GB8lDpK6IvUQmKI5JuwQDGmEKuLzjf3u/qY36l93ZdfYDzyMWA4oVrOFQvYBCJyY",
-    "RdQHAVwZc9XEz+nYqlhd+51Vsd72eq+sijW4Hk5eWBUr7a+Quhmec7F6TklcQt1TXgQcyBYlpCzFCJcs",
-    "Uq5zcpCLAgUnVwTfgmhJk3V28RxHIAiRgxmmhM9FqmTWmeXSmGuwRSsZwTDqlu7MS74OB1MERD0ghpaX",
-    "2dmeOKhNykyqCuyognbKND5bq3aGGh+iIEQMkahYl88pE+kJ4f8L0cw6s346Sk/SR+oscaRV5kRfLBUN",
-    "xUxfXBJiH4arREss1CGvqDwzZ3WdTWN9a7Ra36LNZVBY3apDij9z2JKHHmsMCbgIIXEwc6hlHHms27GV",
-    "nHKsjm3lDjZWrd5ognqNRWAsvlvq5GKdNmu1qtgh+CGQH72yammR2qpOiHqd7/tc9ocKcRUrgKuQet49",
-    "QxEXQBKXhEXQ88ZqhHZn0n/TsypWzMQnQYJi2P0rQYNqHa1m7Vj9Z+WXsFgjrlgsnhpEK2cUwad7TGZU",
-    "0PQU6s/GnLmCFK2Gm2cmK0ktQDabxRHsPSE/iKyzGfQY4odph4YBla0koyu0mgUKE7KEI/Qtjhb9kOlP",
-    "AeUIS47U8iOXczCi8pDr0ql1ZtWrtdZB9eSgXuVCAYcsUnN4yTXtHc4YHkyajH1sGj4EBKA/qhUxBjL1",
-    "0LCoJmNcWNQb7Vb95OSkaaU80MUhciIqtIybkLqxoP/tp5yKxaiHbkIahBhFKByPh3Ik62z7vohvziGZ",
-    "Q4+GKMMz0vClKPIVDAmM4ANcY52bELEIzxEYLyCJMMEPKIIkYaDjk2q12daySmPaybIN4pgm2HlQqO0T",
-    "F0PrS+XbmRzpuXeoizQU+bdVb7WOTxsahP5abXFe8jLNrOrJQbV1fJC08GOCHRxAL4XGaYC56Q/mLCj1",
-    "jN98YAk4vuohJAxHXcxlrBPpml/2l02bMHuaxWwWe8UY7iywA+cbcNu/2orbZr1x3G6t4bZRW8ctZ9BG",
-    "7SBp8Y24rbX2wG290QBj8BY6DygE3TBB7Un1pHqyBbWzHNFqtH35UG52EAreBT8OFlkJgCwHsoLWIraq",
-    "DWWn2/VjLQuQg2fY0ZqmOJgW6vOpLTcPucsVZ8TAcoGiBZL2YhMcV2tpyP8lNAI+JK4UyUknU0o9BKU2",
-    "UH4OEkWJardtuFHhyVMPlYPQh88icFrFnvR+mwgVe8L33uHt4LzHVe7O7WjUG3a43n3TG3V6w4l9ySuM",
-    "e1e9Dm9w0b/iv/tdq2KN7G7/Whw1f5vYo55doJCbWo9JELurPnzFNbh1u7sGnlRQYMX0Smmzu8GukGq2",
-    "hnVBjnK7Rbr4nDpUJqIoY7IoPKjCMBnUDMZeJM4LnmdV8ibfxMYimxhwKwDPxJkFPWEWsYIxl69Rt2B0",
-    "m08I6jILFZ5Fk3sfYVE0sJizK+dExSYlO0NFO5iI9BCesby16GvsO/p8nbPs8LrbTDcXkzVDzv6mG+KW",
-    "HxeNmSLiAnXM27L2GUUxD/WCFyUGTvMirwh3c0TcMvuKMTZVLUXXwBYS5aIn/+AD/rD7dcGnGAFNg8lt",
-    "JwpB8Y2DKnYvdxtr2mDrsK3h9fC8P7RH78qnkOrX+X6v4B6I9iGB87LRl5p5jWkpAIdgssBM2agcSMAU",
-    "AT70PSxwF7Hn7TzukHpoHO1Cv8LUxBWdmIEDkLQDPoKEHyPP7sgd6Q/7kzNgE4AJjjD0QIgcGgq5CPlH",
-    "Fz9iN4beIa9DZzMUggWUO/UUIQJ86CJhwY8WaCXtsbxMGFuQC/hhApM50KY7dZPFe37RH/W6Z1mwKcip",
-    "vH8zQELHQQGHScME/ApFApbd6fRuJhvAZUeoQVUKulkHzU/WZ8BErrLER95KTJDlpqd7w6FpdMIMRNSF",
-    "K6HrELXrMNnJpDca9Ie2mEGmI6EUAY+SOQoBdCL8iEz9g68eF3sclVbF0mgQfyqDQAq62NIX0Ad127FV",
-    "yG1Qvgyy4xiRytieF4tFcORdww4C2Dy17mwOM/bs3hrLbdmxH8s3S16kNusZDVOq4MuHI0n9Nx6CTFCc",
-    "sgDLVkLpVFKEax9KIMyo59ElJnPBsweg99ukNxraV/d2h++T951Rz5701kpuh5P7/vBNv6So27vqlRSN",
-    "b8c3vWG3sOzGHo/fXo+696PeuDfJVLkcXd/e3NvdbsHXUW9w/aZXUDDocbV5a3ke6nh8fX85soeTta+j",
-    "3pvrV721z+P+5bA/5J9HfAr3/UlvcD9+YY963dzH22Hx57H8dDvuje6vri/7w/vxbafTG49zXy/s/pWs",
-    "Wo6ztZLOC3t4KVtN3l7fXwjd577be9Pv9HSzb3Em0K46m7wJBBHehwgyWuByNRLfU3+kR6EnR1i6P5hn",
-    "JvSIENlB0/cRY3BeIFMGsiDZEB8VuIJj5+5j3fFSWCIh2qi6yu1eQzePiklPWkav8Y9kVqtilfBqUYlk",
-    "1aISxalFRVmiM2skfLr+UbKh+T1htPxHyWf5r5LN+ME2z2XZb5rJcl/H4ss6i2U/Sg6TW17xXMv4i2+J",
-    "xey1jouMZLL21KcLlMdSKpbKV0RL1FGobbwZKJtZy8Us8OBqg/uG0DiF81KBwWh9iE4RmwmrkUNJKZyt",
-    "GzfXS4vsB/F2P0hxI6xQh4TGJfZYSsThPWFMzMDo+qq302iKuX4Dy4ulMdmdd8XPqO/Gk97AIKkSs05e",
-    "+HiYPCD3XizyFr8gqTGkCFIeBjBEQELRUjmhmOQCrmTeqSNMMdV0JU1JytltGygV259ixKJ7F0ZwvZ9L",
-    "ROchDBbYAS6KIPaY9KpZLlCIDG1pKe5L+XkFubs7Omb76uBolQMZhXg+RyFyRa/FPjypb2QOnCzYH6J0",
-    "e8zRnQDQv9HenqywpQcjHMVu4YFYluw/Gn7iKAOqi/aFWkTu4vixlxP0U4RCAj0AuYxRDtm8MHXCKKAN",
-    "eUbXvjdDft7mbSSXSbZxKXkWAYeGIWIBJdKjk+T7E909R4fzw9Tlj61YhHxx6BvdQMYU2J93Ejgslo59",
-    "xaLVw0y4T2jvv/wWkDD0t+wFw++wD/S/aQ8Ql9nEKSeEB7TKyhvDCrqjDN+suaXg8nL8Rqo4qYqiP3JV",
-    "ZWRVLKEq7Cjd82I2wj5iEfQLeH+ii7IeRsWCr9wWLc+pOx5qL0Mai6FkyWeLz0huxRgKD0IEXb7ihl9n",
-    "wi7C/b/YJSy1RWRhvqNxCLCbjTb4TxBxplaOVlArDMppKxUdO1FgzFSsyYbtVqsdyUywy/bbVR9RyHCZ",
-    "GqUKy22PZYgzVlsu4LZroWSZ5V3lrHHamjWmDQdWm6jZarvN49YxdFO/BVF/gljUtIxFsryHj8vpjD18",
-    "ZO7U89iDO7USRL63jp32rDWrnjjHp/XTWgsihGoIns44pyR4sOK47TjwcTll0zaLZqT8tkkM4jZwYYRu",
-    "4MqjsPAOU3jIiVLDA0/KpQUiIObt+dKJW52EGtn6bcoWtVktyeX+tDwxN7H1RS6HWEKi4nygaVTU0SI4",
-    "A04T6ddS5e4jzZNjds12ok0g26TrkJLgHhT4tZR2heAjGkkFtUD94aVA6a/ll3HUT1z8twofJ0T8AGNH",
-    "hULEle5chvtcbnNXmNriwMiFoD/AJFbQCmKdtm5Xxs3Zt52EPROJxQoor3FDPewUByCJcn29qPfsN3bH",
-    "nvSvh3yL7ndeWRXr5e3o3X33dvKu8PROYv8FjcNNq2S4YWfxt71+IEavzkzDUgfLkDqIsdLlT8rP9wkZ",
-    "SmMFF5SrriF9lDcnIeKLq07LegGkeuzD1cbLK2MkpbOR5rgLGgo2KakiOtUT2lRefM2326TFtY8xSfAc",
-    "E+BTFgEHMuHigZm4k1kgwFTYQ0g9VBwPVWyl2G0kvBMobsEE0ZbCL0VqxsO5MBRPemlrNrjpDbv94aVV",
-    "seybm9H1G2lj673sdeTdUMcednpXJRdCYossoUZDtGeE5I7q5RV6RF6RRH1EHgNIOEAKHY8hb3bgohkm",
-    "yK0oe/XBErsIBJRhcQbzRKMKYLGz4Es3kLexFdAjc0wQEkpg+vEJOXGEH1EFoMhZF9d7Cq9HtM/1rum4",
-    "Ut7WdFrZ+Tpaua0kUHf3UZFrsePCTRD0i2x0EYI+J2+YWTEVDGyozGy7Sxre2SWNd7pneIupspU237QA",
-    "Cs9ivs+FbZEzdTr7eCp+qFlC4MFwjkJR4+f91kWgepuSxCuBWqLBq5+Jvn7swtOGU5vB5nGrPq2fwuPj",
-    "Wu242bTSSZbXKVWL3uZuWPPEIO5rtadmqWK0f8RC6jC5SR5lRrcTWXPRiZw4xNFqzHuV4ztHMEQhsAP8",
-    "ChVsuP0ZWNFY2FhjxkVMNtrXCANGxA0oJhEDlIApWkBvxklwxY+ydEn0NVwFBPImOGZIFnIwD2h1CN4Z",
-    "v/SdcIiiEKNHZWQTBK3iIMBYRQeAQFycFYThLxCU3jeKTuw4WtAQf84hDcq5f6lY0KygfXaLEPLsUfjk",
-    "cWZ3RWSxYZwzRgKe0xAsMVtwPMn6vDadzbAIcDSa/SyvzoWfmjBtU46hisC+sOMRJO3NHG/XfCb1wyr/",
-    "rTGk10EEazPjIh7rUDwVQiEMd3qmag3M8adL6sIIqhQDOFRrKkKHPLqUxF2Er8zH29DjCxFFATs7OoJB",
-    "cKgd8/kPdnRzZU8urkeDoz/sIOAbxxfhrjkLEVuUtz10qH8EA3xEj8R0j4THMw00y/mYnJkuftYNCn3M",
-    "WHZ6xuXwMyaDw9kzw99PnJIlMEVAe4ARccopgACFjBLo6TCFPSDpptI3xISpQlz2gZWLUpSADBerfYAl",
-    "/lbmRM1YjD1gpc4vOVipBN4bnJbNAmDEzpLwN7YGLIjZAtiTcRoiJzgw4WPOTZRMKQxdJWDS8Hxjv9Se",
-    "L4IW1SlDbJiB8EBmOEJi6K4rlDro6RZn/yHbMOmh5VIkXc4YCh91gDIvByzm5ICiQ5CO4ew/tClI1cFz",
-    "wjUIxfY+H1FmZEzIc8XzXAcV11g4leGHQLnrhOgRo6U8M8iWOho9kRVJhdRHjMVBQIVTmWxk4OtMOwWV",
-    "rSc2slKEaC4Rnl9l7VhkwtX77G5kIiqb7bPexLsAMX3kM6AMCbIbpJzI0XDE6eleHed2BJUxNJjIzALm",
-    "Z4ldAfK6Zus9xI4UNyWj4MriroNQ10KiiQkjF7u1C6yMaBDAEu/TDC8nR9oiZi5jZ93o6/g5bb2dobPD",
-    "+zM4Ohnt/qyTnJOe5QJjspSS9LDvXm7AT5tmIOZd9veEmnPjz+IjsRruC1T532ehaQf5PYHJZqUYXXdq",
-    "3xP+mpN7aVeetILsCT+VOwmgxIN9T1CqXRbY7hqdASlR6hIwe6pOBqyc9pRA1Ae8/aCJVllAe2piBrCc",
-    "MpaBuJ8+lgeakbvCbHLvI66MsrMQQXcNKP+YAymNLarVAgd5ustCXYa4YG3E1ySDw36gS0ZaOH0JsBhK",
-    "8ciSQ9wukBj0vTPs8tlGUHoWleJPinID4tgeXAHdMAv5S8USx6p9DmDmfQo/AdZldjcdMy/yGTnC2qTS",
-    "6VhqT8lH3+dyA4CxrCajtjIWmARVhk0iCeqRplAhoW88GPHZARUGyMSJ3TgtA5raHeRJmSXuXcZFvuNh",
-    "Dg46whnK9GpnCAHhqsXPCZCA9/QRhWIbVQn6Ehh6LIcfnmu8ulzS0QCFWey61GFH+ssBx7X4cimtHgdj",
-    "GbZxBA/6JJKR8HztfPdnEcSRqCTeStoQfLgCMyzjNBgCn2LsPIB5jF3EQMzQLPYAJmAuoeugkEPpff9e",
-    "dQpUp0KBIcA2jAY3MIwICr/XrJwDBZDJGZWMIcVrRxlO0gEk3bKIBh6eL6JDTHftf3qgAaYDSClSqEDf",
-    "a6roQMLTSyf9X4uJM3fFL1AwlQY8WZfT34vJ5EafAFhFfNL+RiKa4r/+678+sjvixKEHDg4SA+bBgT41",
-    "XPYm4FnK9Tg7rUBRsGD/xMJ0pATMM3B3d0cODqTpDTzLmNzOgLI2jnpduzPpdZ+J0fBB/fTTT+CW6aNe",
-    "n0QolNE/oGuqp7yqwe2ZMnBDwwh6AHoeXTJB9FyM8hmJ7GQ3fcNG6YpEEt7K9B3IKMKHYEKBSwGjFRCE",
-    "9BG7WXOlWBa5TBOBerEYatpJOleV80dEtIQ+yGBDIeMMTK5f9YZcnnvYQYSZbgCD/kRIYxT67Ho25kLF",
-    "QZtkckKLRxFlRuIMPuoRmqEQEQdZpp9A7VBkSKABIjDA1pnVOKweVoXpPFoIe9oRjNh9ahg5CmK2SH+L",
-    "C3pa5DlwE7MFF7b5XHGpvZSrzyF0HgyvwmRhMFGbYMJ3qQEGzDy6TI40OqbIOO6IEHvirQB8hNjTJyLD",
-    "yskA1plZyFyukjaq8pXgGBT1hNvFDWWRHbEkDxLjMzOzIinOOafuSm926mrF6PLoowrcSPOhbgxZTuB/",
-    "ETupdNNk0sRZr1Z/TEf5Tfb6lWVeHMj0KOtW3/d5A9uHLx8qFot9H4rkGDfX4wkYoiXI5JJSNxQvDoE9",
-    "GcsbinWJwoc/L8pIOxJZaFnupCpFJ556aXRi4kWn8nY9ILJGO0ZSW2nQ4QdHfiBTG7g6KycO5/LyVnro",
-    "SQt6scheJ6ZLFHX0HK2vWlbzZkz9fSAux4SrZ3HipyTTQZqwJPmkk5YYH8wMIAWf6+ZnmQ8k6xiTlipB",
-    "lvzW1qP0QzYnU/J9l7Q8f96s0qQmusoHI5vxVpZTxuMdGS53R/f+g8hKU8SFTpIjLLUN51iR7+4ddRow",
-    "UoopXrQPQUqdJkeu7lPLbTlDipsolkSm8OpSJ1bMZ8ZDc0VH+KeEyMNCRPsoWlChdWMy5/u2uK1K4PC9",
-    "I/VF1VdkIuneHBO5pzpxyGgIHjEUg3hG0FP0LN2PTcd4RFgcqqAa5RjPOVuY6R5wEEj/ITeWDIhc4MbJ",
-    "mdGDzoMwSCZOy2kWv/+pufGp/TkzmyMiUsUzmRNSuBqwCAVi2B56RCGco4IxCvWzdgj6jMVIhtvrGHyp",
-    "ecor5sT9R+7LULmwMxRx+Iz6SAWYEzViFoHTKnDhit2R+iHQdGiOYJ7G53DyDGk8X6Tlykde3zBrmSwu",
-    "QA/vSEMPWbqgiAVBrh71HWl+7z7vyPEhuIGCAgjvKEAq4j4I0SOmMRP4FvGxJbvLytbsWsm8LvC+3O+e",
-    "Lx7mlKmpEs64CvscE8eLGX5EPysiS48hnrR5QKIXQE6IcO2sK3PRCKJQpWVPCKQOX6YE3Zqhco+pTNGM",
-    "higzl5KxaOvtN41kLNNIKVG4zsOK2RJCKRkLLy9KoL9rx2lK3hAxvRaCMJ/78An7sX8GatVq9WfwXGUO",
-    "Ur/3fUEgGdCHb9ZojBToiT6jo+Z0lOD7THr00+NZ63g2c+vweNauQlSvO6jdFrl1cuHdSfi1pbkDIB9K",
-    "bhaE29OO6nYQWGmwtSVjae/H74adXvf+YnQ9uE+jj29u8lHUm+Nqk5xpbqt6XK+16/AENuunsAlnjdn0",
-    "1MqHx2aCmSw9REuHJsmEitJhUyWrzA6iIMzy/YfUKUaas0CIfJr42cxVXAVdEmFwP3ZOGvVGfSqDGxrH",
-    "rgvd6QxOrXxko8ruKKPcRLNauwUbJ6ftKWqcnNYd1Ki3Z5YZB/Z+fYqPKFxxNTE7xTRqSo6nOT2p1qez",
-    "U9g6qU5bsNmon6a8KaOUBINkgcMgYL9EiK0ZHjd3dZztqtZOuzKiowr6Gy/hHChP/tIuYOPYbUxP4PQU",
-    "1avQcZqo3UCNtAsRnMWZywigsurVevWgenJQrU9qp2fV5lmtddhoHVer1YNq66xaFQ2ECDmzjmdN99Rt",
-    "12cnTv0EVWG7AeEJgiLtJApDTmkiHWZWh11zvIfbY+/SSN6d0t/KeK0vpS6DaYSumMgfOyU0kBP6Yxc3",
-    "xGzbH6+PJ1p0kVquDqzG1r1JLxcWyvtZkgBth1Oy4bGQOxYbWTLWNYpsDr6cOlG0ummVI7lncAxtqaje",
-    "i/khWwjfMGAmoW+aElBl3U0cK9UFgDjVh9BB4AigaEEwP3P+zeB6mduQT2xX0G/4RCEBY+nB/i2gMqOU",
-    "V7jfNrYuZnCKPb4lfs3wsnkVX9ClPIlIo5y+k5ki4HiQMXltzOmv17vm2i0NI0zmf/uWLrswgvUUgEpN",
-    "uSeAWgpApLjcs3kjm0lSJLfcE0Qzn4xy9+YMEZef8dJ3u+AcYvL1AOlsJgyuKQSRxnMfqmLiMCjeAuDn",
-    "u0cYitPw14/pAj5ScXlrE+xD7+sBGU47ZaP6kN0Md9rO8okmc9ncf/j2kvHFKbT8GPlzN+8vGTe2LbsL",
-    "TFy0jFbJDqOS6iJ34y7TNfr7q24ySQ5pD7FM9IHMjzzLpk8/mYkh60aD892a5OiyPIJ7LRVtNnx7Ex0b",
-    "KV2/kop3JFiTygShr1P/GhFnKWUDCSfuJzvaLDURq6vHpPkhkM8/Cb0pDUnIXhHkPfKE+W1F4zQFo/RW",
-    "2HplIDoTt1fzWFADQum1hDBguAhgtwIyTuUVaSrS/kiFLNZL8PEXYLCiq43362l/vyXTczYRcFppzTsw",
-    "k5w39e9LGpjvJiQfE889les1e4VQ4IGn6hkPKiS1U9+30psV0xVN5clMI8fT+ecRYrqJFV6+/Bn3LV+1",
-    "9yYpLX/4vpt4DBcIJ5PHtGg6PzQ+50TTkeLo+wiFvrQsl0qrMfaxBxPzYV5MJdffOs9r5kZcdsPAlEYL",
-    "3VQkbk36NQTeRunRl6Am6YB/uDjZXhNh8m+p82+p868udcBzyZ2YzEHKoD/vKoz+SF9R/rKj0mRG7Mi7",
-    "XobJ3DMUoilkqNCTIu9QldGIsmrTZonUy779/ANcKv4tAModOiK6TSL40PNu8hX/unJid0+PVDr8GdKg",
-    "nOv33bCNx9W/8NZH0ou9VESsuVeJhEaGOmL6YgvPu0wM8nN8iA7TPC6N0BUvK67EvwSF7OeKfuWen8AS",
-    "nz/MudxVxkUfBoH0KMWheyDbm5384+//R47qH3//v/mEDYCGc0gUypnwfLjCLMp4m2UAS3xoB3CzdaHk",
-    "kh1bP8YKkaY5Q25DpTmD03qj3jxx6gVpzhoZZqzVG83jk6fHKfHln632aa3eOG6eNk6NdFOZZFNR0/vc",
-    "dj4unOOmF7uhfDfrnzHb2tfs8DJ93Pc0gxREvmSjSwp4OqEYzdEXh/qbYOdCF9yOyLTFAJQ+O9iRdFqR",
-    "26/KsQAZo45MKWx4Q5dwTbF3rEHO+3jCmpQ8REuQJOpLtt0fQyMbrzn3SfO4KU3hlpx4KsdNv5vN8qgc",
-    "mdXSRIXJcDINgHxTMvcWWj6rwz4Z9kwTYiIP+93cg86KTOb5hHvbskLuculq65Q6KqnKuvtz7Tt4lfxT",
-    "ZoPcWbNQUmkdeZLn3X1EkY5GK46eK/Ll3iiNUv3g6A/xf3WYcJGHit7x+V+oLHTFVFnu+iNhlqwElZUl",
-    "+EuJrxLN4Fv2m5LllC8tgCSTavHuspeyqNZcmGMCGDmLf4klT8OXbm4nyt+3Itx8zY1C2/G1GFXp5yrC",
-    "T1Sn8U+zcnOQaTQRZkAEd5L5IejP1EPqk84L7V2MRSyfK68CoGxoNKoAHOmXu5aU/OPv/x2JO/kFJHOZ",
-    "Vzm3s/O1WyfLr93h09cZS7f33SVsRo6uHv3Pi9nyuLogjVMI2d5yNJuztUCoyjStcrHYhn1pX/1dduwW",
-    "aD777k5/Fuq+oyKc2YTKdh9B71ukVRz9W+L8NSVOHP2TyhvrO2tuf5rE+R6a8L+KrLmdbJQ0XM/NJ2na",
-    "yWSuDUiZbE3skB8Lhce9Pv7NsBeJF0amKwANb/7klWpZO1W9Cm1NZuragpv/Ikd/7G4LOyhqJXzQv6ad",
-    "kSH5K5oz7a+4T5xE+k4lnaV5incPTtnaQ09l89kKvyjgZMeZm0nDv6K5mWp7r7ldCLoEEQUODKI4RJm3",
-    "zrM5yOgjCj0YMB3MJXAScvlfhpBZKPzx/2nGE9H/8ZCX92ZGfenIaCTNt+rVWvug2j6o1Se147Pqydlx",
-    "7fCkXUs9/5Ms+u91vvykTV1YgI3U7s12VWA0V62xW7Vmrlq9WeUYSS+rMjXlRjM9PW27s2mz6kDUOm3D",
-    "dgO12y1ensmCLys6s9NMxdbMtTLp8M0s+GmC+3o1O65avVotTFFvvYFJFt1MbvoUyw0Ty00Ty5lk9dYx",
-    "RNVp3VETa9Sr9al7cuI4VkEueesiJg8rYLu+cNHN55G33mCGRW6CBfVRRJfybtVfgWlIOWX/4+//zcAS",
-    "uW56AZkkmd80kLVs89ZLSBDoUmTpIKKNzZO87WY7I2F7ls50rnYzMbuRcH07ir/KYJ/J1f4nOOHmdIIC",
-    "Y758VMPYkzc4MWahHf2B3S9HipyE8XpTcOduD1KAKRJav6bRRBAGMFrklIL8TfdGuVh8KWHLQ5SIQUaO",
-    "hwkCMPdCBrgm3goESB5H9Ny1WpQMFDxPDmRHGpb7c8GxQjbYoggVvkOpEmlNEYig8NMkBQ96gI4cGMJi",
-    "0zHfn9CjKttcZBcbEaufOVBguXCXQIse4frwAzOFZPnqB/HRFu4R1me1nlk22sZFMufpbn7A8oWG/AvC",
-    "QL3cAEMZja4fZyi89i14qoGG6cMMJZq6GORf1ftdhbWiE+ek2Zg6janTqk9bs2YVVZvQSO2GghAxmWhJ",
-    "kLP2eRcRiJUsnFMFx5k501O3MW2ncBJcbgYxdRWI0was11qzmZOCUEuTB/B1m84j8v6c3eZRJvgv2GUU",
-    "OW3gCx+GD/cwCO5VdnjpfVosuCcZh1IljBc4Uqp0Lqke5vzgSrWc9yIfEggCzhJJZ+LlWvXCAHkWcWhR",
-    "7pkBoe5knxdQzXWiLmlzk6NKUu0qeQrSrNfr79Dr3nidbDc6x4EeeLg2cv5jieTTQesX4gMYPthB0E+Q",
-    "+o1iOXtFTR+MDXdKqYegfN8r3UTe80ofvjLAtYjycvTFJwjsIADmFDWd9Q8zyQHTXIya6NAOgngKGXYy",
-    "3oVwSuMomxMsZigEywVluaR5Kxo/029WpLmbVeISbyXz52n5Ph5fy4xiRTJ5gKwfYnMzEhjISB+YifRx",
-    "psdpogBR7mYjgWq1nHucE+Ao+qWeDWvfw8Jmx9GCq4kiJcyB8Hd4PkA/f3cRtiEfEe/UIKPeYbZEEg+D",
-    "vneUzXq6NTpNJDvtu0Ga8PS3wRWYYS99GVXb5DifJ7nhuHgBQxqpZDolOebSlGMygQ1URJhzrFGJ70zo",
-    "EuwCqnSsKqvYf0phtMQMARypzGR8Gs1qE4jg9kJKHUPf67vBQKNlL7J98r2t9nPrLq5WG87fnnxPv5P4",
-    "67PaYfUZQMShXFX/9dnt5OKg/exvoia6I7IFYdWznnBT6aoFoiF48j3Czgir/npnxSE5o5BhJvIys7PI",
-    "OeMIOasfVs/0kt1ZSZPahia6+hn05irFrNGy/uudSJ54dnS0XC4Pl41DGs6P6tVq9ah6ypHgMjz/6c5S",
-    "XjX9rqrPVINMssXjWaNdc+pNt15HDVQ9PXWbNadVb3HqPHzyvTsLPEIPu7ckwt6vd1a92hAJG+onk2rj",
-    "rFE9q5/8fmcpVKWIeooQ4bhl2ZLaWRfPEYsG8ubF9uY0xNHCL5tR7aja1DM68GmIfvLd4zsLHH0fsIg4",
-    "P4U4QL5bO6l+O9gM/tkC1r7fSFMEsAWs15vfFwcc5vHJDxpto/39R3tcqxfBHOM5wWReArSycb1cBg/K",
-    "1mwz3B3QEDJ4UEK53wX2RiLes4cMVsIfjZVycv5u4Isp+3uBLyHv7wW+gNKPNknY6lm/ezMeXxub1FtI",
-    "Iq4YEW024mND7q93lsh0cGeBIKQRdain8pT3SOyrfXnLvqYbru8Ar5C5T8YM/XpnMYmTfOU6r9wnM5r/",
-    "/Ntx9bTLd82C7x1+khBZImQBGvT7nd+7nY7tVDvndu8XSHvL7ut3L1/R3/uLR2dov+5dnb+2l6jbuxrY",
-    "D5d27bZ3vhh03rwZPHU+2y/vyPl8+Obcng/sh+H54DVbdl6/6755/fpF1345GX3sjQZ2W7TqzJf9W99b",
-    "OpdPwdR3nvoTe8bb3pFzmw0uexeL6Vtv1b84X03rr+dvayPPaYzc/sX5o0NGi2m39/vg3BGQ7OXytdtw",
-    "G1fkZeC8OGd3BL49Jlf+8HE6secXy+pq0LWbg4mzHHweLAcfR/DSbq8Gk/5y0HVWw679efDZXg0vaDKr",
-    "O5Kf176zuiP5ee07qzuSn1c6q845+WwPz+cPnxYP+PJ0WT23X/cubPv6/ONrezl/99CZv+vZd2Q1vGi2",
-    "f7meNa6c5hs2d7r4lyjsvmOd5mcUfv48HUbd1jX8HU/d23jyrtUK6sP+1dv667d1+/h1fTi7I6gDFw9v",
-    "HxpovnpXXfothJ3Pjvc5HJy0TuJJcLO6PJq3yMvBzHd7F69nrfhpcXT9ZjD9bdU9Qe0hvSOnzkP7oWaT",
-    "6HO9bUetk9qTT35beb/4A+e2uzrxJpcXD6/aR3Myue3Yy55tT7IzuyP2aybmNn9tT6/br47G4wc06J46",
-    "N48nbv3NW/eiPvkYL94M5zN83mp+ItdOe/h7+3o5e9eahm71lzvy6uKl/bJGlr9557/HL9vXl9VXZBJC",
-    "Mnr7YvDbZOI8XNy6TRothvbognqdut+8tn3c6od0OphG3os7suhOP03qL9/efHKvJ4+1y16r/vQaVV20",
-    "aLz9fHEVnDD49Kl3/Nv8lL35/fTVS7sD66H9669a7z0q5bhceZ5Tj0o4+2hNPORlx1jE3nEpdU1UvnBw",
-    "joUdfYs8mspa7OzFZHJzMEIyE/edBXSo1SZVGAY4zQzPGD1iwYHKYofcUkV5Xfh/vwncXI8n/6ODPyra",
-    "QPKzuzYsxJvKxBu6T7535kExb0S05NemD6PTfMNNgI27z6+Cb7Tf1M3t6KoYvFwEsL4KJf3djq7WkLwJ",
-    "iR350MiNSI0B1LMjk1Ug9lB9HMw3usSPyMCc2sqNHnMVjMOaD7GnHm+VZUXPmpi6x1oDozAz+HW1JXeC",
-    "lhWsTdlghFVBGwTSFOeYgN8GVwWJTL/eu2r9LZoCO09mOIah5/JQFCkDj3oYbq+MLaLN2oVNkZVkIqD/",
-    "L7hiOZ3m7jWM0D7D+so2347AujQrNtxWzXEadbeVQum70gqyBUIrN46TFMILGLpLGG65oYF6Jk5jdjJt",
-    "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",
+	"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",
+	"Kp+euvWK06g2OHUePi68Wws8QA+7NyTE3m+3VrVcE+kNqifjcu2sVj6rnvx+aylUJYh6DBHhuGXpkspZ",
+	"G88QC3vylsT2ZjTA4XxRNKPKUbmuZ3SwoAH6ZeEe31rg6GnAIuL8EmAfLdzKSfnHwabwz+aw8nQjTRDA",
+	"5rBarT8tDjjM45OfNNpa8+lHe1yp5sEc4RnBZFYAtLRxvVwGD4rWbDPcHdAQMHhQQLlPAnsjEe/ZQwor",
+	"wc/GSjE5Pxn4fMp+KvAF5P1U4HMo/WiThC2fdduD0eja2KTeQRJyHYhouw8fG3J/u7VEsoBbC/gBDalD",
+	"PZXAu0OihdqXt+xruuH6DvAamftkxNBvtxaTOMlWrvLKXTKl2c/vj8unbb5r5nxv8UODSLQgC1Cv2239",
+	"3m61bKfcOrc7v0LaWbbffHj1mv7enT84fftN5+r8jb1E7c5Vz76/tCs3nfN5r/X2be+x9dV+dUvOZ/23",
+	"5/asZ9/3z3tv2LL15kP77Zs3L9v2q/Hwc2fYs5uiVWu27N4svKVz+ehPFs5jd2xPedtbcm6z3mXnYj55",
+	"5626F+erSfXN7F1l6Dm1odu9OH9wyHA+aXd+7507ApK9XL5xa27tirzynZfn7JbAd8fkatF/mIzt2cWy",
+	"vOq17Xpv7Cx7X3vL3uchvLSbq964u+y1nVW/bX/tfbVX/Qsaz+qWZOe176xuSXZe+87qlmTnlcyqdU6+",
+	"2v3z2f2X+T2+PF2Wz+03nQvbvj7//MZezj7ct2YfOvYtWfUv6s1fr6e1K6f+ls2cNv41DNofWKv+FQVf",
+	"v076YbtxDX/HE/cmGn9oNPxqv3v1rvrmXdU+flPtT28JasH5/bv7GpqtPpSXiwbCzlfH+xr0Thon0dgf",
+	"rC6PZg3yqjdduJ2LN9NG9Dg/un7bm7xftU9Qs09vyalz37yv2CT8Wm3aYeOk8rgg71fer4uec9NenXjj",
+	"y4v7182jGRnftOxlx7bH6ZndEvsNE3ObvbEn183XR6PRPeq1T53Bw4lbffvOvaiOP0fzt/3ZFJ836l/I",
+	"tdPs/968Xk4/NCaBW/71lry+eGW/qpDle+/89+hV8/qy/JqMA0iG71723o/Hzv3FjVun4bxvDy+o16ou",
+	"6tf2Aje6AZ30JqH38pbM25Mv4+qrd4Mv7vX4oXLZaVQf36Cyi+a1d18vrvwTBh+/dI7fz07Z299PX7+y",
+	"W7Aa2L/9pvXeo0KOy5RnOfWogLOP1sRDVnaMREgcl1LXRCXSBudYGMK3yKOJrMXOXo7Hg4Mhkimqby2g",
+	"I6A2qcLQx0nKdMboEfMPVM435BYqyuvC/+kmMLgejf9HB3+Ut4FkZ3dt2H03lYnHZR8X3pkHxbwR0ZJf",
+	"WzmMTrMNNwE27im/C77RflM3N8OrfPByEcD6KhT0dzO8WkPyJiS25AscA5GHAqj3OMYrX+yh+jiYbXSJ",
+	"H5CBObWVGz1mKhiHtQXEnnrVVJblvfdh6h5rDYzC1ODX1ZbMCVpWsDZlWRFWBW0QSHJ/YwLe965y0n5+",
+	"vwl6/ZGWHDtPajiGoefyUBQpA496MW2v9Ciizdo1TJ6VZCyg/y+4ODmdZG4rjDA8w9DKNt95wKq0INbc",
+	"RsVxalW3kUDputIKsgVCIzOOkwTCSxi4SxhsuXeBeiZObXoyaTbRNIEwgKuAet5T3LuIN5h/7rWLJN0c",
+	"ytdUt+HSZUmD+zsvSQW/Q05ETf3pR6dy85PnscK7VO75v27+nT81Y35+jvy9iTP10PXPJdL0kwM5xMrH",
+	"AkzCKKLa7ADSD7/E9v7SposAFDzke1AM4ueerJIVZd7o2vBaj5XjmQmJO6GPa3CY/L5BGxTwPsUYiL29",
+	"U5gwkqOlQuKN761DoCWZ8bV9COrlyr35KfEFNj7q/dH4lL0bMYrUQyPGl+KrN6PSq0MwFNksU123kR8g",
+	"Rwb/ffr2/wIAAP//pM2b+dG9AAA=",
 }
 
 // GetSwagger returns the content of the embedded swagger specification file
 // or error if failed to decode
 func decodeSpec() ([]byte, error) {
-    zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
-    if err != nil {
-        return nil, fmt.Errorf("error base64 decoding spec: %s", err)
-    }
-    zr, err := gzip.NewReader(bytes.NewReader(zipped))
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
-    var buf bytes.Buffer
-    _, err = buf.ReadFrom(zr)
-    if err != nil {
-        return nil, fmt.Errorf("error decompressing spec: %s", err)
-    }
+	zipped, err := base64.StdEncoding.DecodeString(strings.Join(swaggerSpec, ""))
+	if err != nil {
+		return nil, fmt.Errorf("error base64 decoding spec: %s", err)
+	}
+	zr, err := gzip.NewReader(bytes.NewReader(zipped))
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
+	var buf bytes.Buffer
+	_, err = buf.ReadFrom(zr)
+	if err != nil {
+		return nil, fmt.Errorf("error decompressing spec: %s", err)
+	}
 
-    return buf.Bytes(), nil
+	return buf.Bytes(), nil
 }
 
 var rawSpec = decodeSpecCached()
@@ -5947,13 +5021,12 @@ func decodeSpecCached() func() ([]byte, error) {
 
 // Constructs a synthetic filesystem for resolving external references when loading openapi specifications.
 func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
-    var res = make(map[string]func() ([]byte, error))
-    if len(pathToFile) > 0 {
-        res[pathToFile] = rawSpec
-    }
-    
-    
-    return res
+	var res = make(map[string]func() ([]byte, error))
+	if len(pathToFile) > 0 {
+		res[pathToFile] = rawSpec
+	}
+
+	return res
 }
 
 // GetSwagger returns the Swagger specification corresponding to the generated code
@@ -5962,29 +5035,28 @@ func PathToRawSpec(pathToFile string) map[string]func() ([]byte, error) {
 // Externally referenced files must be embedded in the corresponding golang packages.
 // Urls can be supported but this task was out of the scope.
 func GetSwagger() (swagger *openapi3.T, err error) {
-    var resolvePath = PathToRawSpec("")
+	var resolvePath = PathToRawSpec("")
 
-    loader := openapi3.NewLoader()
-    loader.IsExternalRefsAllowed = true
-    loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
-        var pathToFile = url.String()
-        pathToFile = path.Clean(pathToFile)
-        getSpec, ok := resolvePath[pathToFile]
-        if !ok {
-            err1 := fmt.Errorf("path not found: %s", pathToFile)
-            return nil, err1
-        }
-        return getSpec()
-    }
-    var specData []byte
-    specData, err = rawSpec()
-    if err != nil {
-        return
-    }
-    swagger, err = loader.LoadFromData(specData)
-    if err != nil {
-        return
-    }
-    return
+	loader := openapi3.NewLoader()
+	loader.IsExternalRefsAllowed = true
+	loader.ReadFromURIFunc = func(loader *openapi3.Loader, url *url.URL) ([]byte, error) {
+		var pathToFile = url.String()
+		pathToFile = path.Clean(pathToFile)
+		getSpec, ok := resolvePath[pathToFile]
+		if !ok {
+			err1 := fmt.Errorf("path not found: %s", pathToFile)
+			return nil, err1
+		}
+		return getSpec()
+	}
+	var specData []byte
+	specData, err = rawSpec()
+	if err != nil {
+		return
+	}
+	swagger, err = loader.LoadFromData(specData)
+	if err != nil {
+		return
+	}
+	return
 }
-

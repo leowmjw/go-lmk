@@ -109,7 +109,6 @@ paths:
                     name: string
       parameters: []
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:*'
@@ -142,7 +141,6 @@ paths:
         - authorizationCode:
             - company
             - 'company:departments'
-        - Bearer ApiKey: []
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -191,7 +189,6 @@ paths:
                         required: true
       operationId: get-employees
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - employee
       description: >-
@@ -233,7 +230,6 @@ paths:
         - authorizationCode:
             - company
             - 'company:workLocations'
-        - Bearer ApiKey: []
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -314,7 +310,6 @@ paths:
       operationId: get-custom_fields
       description: Returns the custom fields for the given company.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:customFields'
@@ -353,7 +348,6 @@ paths:
       operationId: get-teams
       description: Retrieves the list of teams for the company.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:teams'
@@ -391,7 +385,6 @@ paths:
         Retrieves the levels for the company. Levels are set positions for an
         organization, such as Manager, or Executive.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:levels'
@@ -448,7 +441,6 @@ paths:
         Retrieves the information for a single employee based on the scopes that
         your API key or access token have access to.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - employee
       tags:
@@ -499,7 +491,6 @@ paths:
         Similar to the active employees endpoint, but this endpoint includes
         both active and terminated employees.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - employee
       parameters:
@@ -529,7 +520,6 @@ paths:
         Retrieves basic information about the Rippling user whose access token
         you're using. This is generally used for the SSO flow.
       security:
-        - Bearer ApiKey: []
         - authorizationCode: []
       tags:
         - E. Current User
@@ -840,7 +830,6 @@ paths:
             Filter to capture whether the leave request overlaps with a date
             range.
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:leave_requests'
@@ -1071,7 +1060,6 @@ paths:
 
         5. Pause and repeat the previous step
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - company
             - 'company:activity'
@@ -1124,7 +1112,6 @@ paths:
       tags:
         - A. Companies
       security:
-        - Bearer ApiKey: []
         - authorizationCode:
             - 'company:leave_requests'
       parameters:
