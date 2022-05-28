@@ -1,0 +1,2020 @@
+openapi: 3.0.0
+info:
+  title: API Reference
+  version: '1.0'
+  contact:
+    name: Rippling Support
+    email: support@rippling.com
+  license:
+    name: MIT
+  description: >-
+    Access to Rippling's Employee Management Platform requires an access token
+    or API key that is tied to a Rippling client account.
+
+
+    Please see here for an [overview on the Rippling
+    Platform.](https://developer.rippling.com/docs/rippling-api/docs/Getting-Started/a-Introduction.md)
+
+
+    Additionally, you may find these quick guides useful in getting started.
+
+
+    - [Getting Started as an Application
+    Partner](https://developer.rippling.com/docs/rippling-api/docs/Getting-Started/c-Partners.md)
+
+    - [Getting Started as a Rippling
+    Customer](https://rippling.stoplight.io/docs/rippling-api/docs/Getting-Started/b-Customers.md)
+
+    - [Rippling
+    Scopes](https://developer.rippling.com/docs/rippling-api/docs/Getting-Started/e-Scopes.md)
+
+
+    The access token or API key should be used as a bearer token for HTTP
+    requests, for instance:
+
+
+    ```js
+
+    curl --location --request GET
+    'https://api.rippling.com/platform/api/companies/current' \
+
+    --header 'Authorization: Bearer REDACTED'
+
+    ```
+
+
+    ### Using the Interactive Documentation
+
+
+    Rippling's Documentation Portal allows you to test the API endpoints
+    directly within the documentation. To do so, provide your API key or Access
+    Token as a header parameter with the form Authorization Bearer: TOKEN.
+  termsOfService: 'https://app.rippling.com/developer/tos'
+servers:
+  - url: 'https://api.rippling.com/platform/api'
+    description: Production
+  - url: 'https://sandbox.rippling.com/api/platform/api'
+    description: Sandbox
+tags:
+  - name: A. Companies
+  - name: B. Employees
+  - name: C. Payroll
+  - name: D. 401k
+  - name: F. Groups
+  - name: G. SAML
+  - name: E. Current User
+  - name: H. ATS
+  - name: I. Application Management
+  - name: J. Reports
+  - name: Deprecated
+paths:
+  /companies/current:
+    get:
+      summary: GET Current Company
+      operationId: get-companies
+      description: >-
+        Returns the currently accessible company for the given token. Please
+        note, the returned fields depend on the scopes that are enabled for your
+        access token or API key.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    address:
+                      city: string
+                      streetLine1: string
+                      zip: string
+                      country: string
+                      state: string
+                      streetLine2: string
+                    workLocations:
+                      - id: string
+                        nickname: string
+                        address:
+                          city: string
+                          streetLine1: string
+                          zip: string
+                          country: string
+                          state: string
+                          streetLine2: string
+                    primaryEmail: string
+                    phone: string
+                    name: string
+      parameters: []
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:*'
+      tags:
+        - A. Companies
+    parameters: []
+  /departments:
+    get:
+      summary: GET Departments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                description: An array of department objects.
+                items:
+                  $ref: '#/components/schemas/Department'
+              examples:
+                Success:
+                  value:
+                    - name: Sales
+                      parent: 5ec5595ffa9c4e1728118d6f
+                    - name: SMB
+                      parent: 5ec5595ffa9c4e1728118d6f
+      operationId: get-departments
+      description: Returns a list of departments for the specified company.
+      security:
+        - authorizationCode:
+            - company
+            - 'company:departments'
+        - Bearer ApiKey: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      tags:
+        - A. Companies
+  /employees:
+    get:
+      summary: GET Employees
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+              examples:
+                example-1:
+                  value:
+                    - id: string
+                      name: string
+                      firstName: string
+                      lastName: string
+                      employmentType: CONTRACTOR
+                      title: string
+                      gender: MALE
+                      identifiedGender: MALE
+                      department: string
+                      workLocation:
+                        city: string
+                        streetLine1: string
+                        zip: string
+                        country: string
+                        state: string
+                        streetLine2: string
+                      spokeId: string
+                      endDate: string
+                      roleState: INIT
+                      workEmail: string
+                      manager: string
+                      customFields:
+                        Id: string
+                        type: TEXT
+                        title: string
+                        required: true
+      operationId: get-employees
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - employee
+      description: >-
+        Retrieves the list of active employees. The fields retrieved depend on
+        the employee scopes that you have access to for your access token or API
+        key. The only guarenteeed fields include id, personalEmail, and
+        roleState.
+      tags:
+        - B. Employees
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+  /work_locations:
+    get:
+      summary: GET Work Locations
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/WorkLocation'
+              examples:
+                example-1:
+                  value:
+                    - nickname: string
+                      address:
+                        city: string
+                        streetLine1: string
+                        zip: string
+                        country: string
+                        state: string
+                        streetLine2: string
+      operationId: get-work_locations
+      description: Returns the list of work locations for a given company.
+      security:
+        - authorizationCode:
+            - company
+            - 'company:workLocations'
+        - Bearer ApiKey: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      tags:
+        - A. Companies
+    parameters: []
+  /custom_fields:
+    get:
+      summary: GET Custom Fields
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomFields'
+              examples:
+                Success:
+                  value:
+                    - type: SELECT
+                      title: What is your race / ethnicity?
+                      caption: null
+                      required: false
+                    - type: SELECT
+                      title: Veteran Status
+                      caption: null
+                      required: false
+                    - type: SELECT
+                      title: What is your Gender?
+                      caption: null
+                      required: false
+                    - type: SELECT
+                      title: Disability Status
+                      caption: null
+                      required: false
+                    - type: SELECT
+                      title: How will this employee be classified for EEO reporting?
+                      caption: null
+                      required: true
+                    - type: NUMBER
+                      title: Data2
+                      caption: null
+                      required: true
+                    - type: DATE
+                      title: Data1
+                      caption: null
+                      required: true
+                    - type: TEXTAREA
+                      title: Data3
+                      caption: null
+                      required: true
+                    - type: TEXT
+                      title: Data4
+                      caption: null
+                      required: true
+                    - type: TEXT
+                      title: send notification again
+                      caption: null
+                      required: true
+                    - type: FILE
+                      title: offboard
+                      caption: null
+                      required: true
+                    - type: TEXT
+                      title: severance test variable
+                      caption: null
+                      required: false
+                    - type: TEXT
+                      title: Favorite Animal
+                      caption: null
+                      required: true
+                    - type: TEXT
+                      title: additional variable
+                      caption: null
+                      required: true
+      operationId: get-custom_fields
+      description: Returns the custom fields for the given company.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:customFields'
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      tags:
+        - A. Companies
+  /teams:
+    get:
+      summary: GET Teams
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+              examples:
+                Success:
+                  value:
+                    - name: Applications
+                      id: 5ee6c69bbc3bc7293a217ff2
+                      parent: null
+                    - name: Identity
+                      id: 5ee6c6a2fa9c4e3d71cc32d7
+                      parent: null
+                    - name: Hardware
+                      id: 5ee6c6a7bc3bc7293a217ff6
+                      parent: null
+                    - name: Payroll
+                      id: 5ee6c6abbc3bc72c3f6b88ef
+                      parent: null
+      operationId: get-teams
+      description: Retrieves the list of teams for the company.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:teams'
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      tags:
+        - A. Companies
+  /levels:
+    get:
+      summary: GET Levels
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Level'
+              examples:
+                Success:
+                  value:
+                    - name: Representative
+                      id: 5ee6c643bc3bc72b7f40e04a
+                      parent: null
+                    - name: Executive
+                      id: 5ee6c649bc3bc72cfcb9d3b8
+                      parent: null
+                    - name: Manager
+                      id: 5ee6c6bdbc3bc7293a217ffc
+                      parent: null
+      operationId: get-levels
+      description: >-
+        Retrieves the levels for the company. Levels are set positions for an
+        organization, such as Manager, or Executive.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:levels'
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      tags:
+        - A. Companies
+  '/employees/{employeeId}':
+    parameters:
+      - $ref: '#/components/parameters/employeeId'
+    get:
+      summary: GET Employee
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Employee'
+              examples:
+                example-1:
+                  value:
+                    id: string
+                    name: string
+                    firstName: string
+                    lastName: string
+                    employmentType: CONTRACTOR
+                    photo: string
+                    smallPhoto: string
+                    title: string
+                    gender: MALE
+                    identifiedGender: MALE
+                    department: string
+                    workLocation:
+                      city: string
+                      streetLine1: string
+                      zip: string
+                      country: string
+                      state: string
+                      streetLine2: string
+                    spokeId: string
+                    endDate: string
+                    roleState: INIT
+                    workEmail: string
+                    manager: string
+                    customFields:
+                      Id: string
+                      type: TEXT
+                      title: string
+                      required: true
+      operationId: get-employees-employeeId
+      description: >-
+        Retrieves the information for a single employee based on the scopes that
+        your API key or access token have access to.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - employee
+      tags:
+        - B. Employees
+  /employees/include_terminated:
+    get:
+      summary: GET Employees (Including Terminated)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Employee'
+              examples:
+                example-1:
+                  value:
+                    - id: string
+                      name: string
+                      firstName: string
+                      lastName: string
+                      employmentType: CONTRACTOR
+                      title: string
+                      gender: MALE
+                      identifiedGender: MALE
+                      department: string
+                      workLocation:
+                        city: string
+                        streetLine1: string
+                        zip: string
+                        country: string
+                        state: string
+                        streetLine2: string
+                      spokeId: string
+                      endDate: string
+                      roleState: INIT
+                      workEmail: string
+                      manager: string
+                      customFields:
+                        Id: string
+                        type: TEXT
+                        title: string
+                        required: true
+      operationId: get-employees-include_terminated
+      description: >-
+        Similar to the active employees endpoint, but this endpoint includes
+        both active and terminated employees.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - employee
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - $ref: '#/components/parameters/ein'
+      tags:
+        - B. Employees
+  /me:
+    get:
+      summary: GET Current User
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Authenticated-User-(Me)'
+              examples:
+                Success:
+                  value:
+                    id: 5ec5595dfa9c4e1728118d11
+                    workEmail: cpitt+2@rippling.com
+                    company: 5ec5595afa9c4e1728118cb5
+      operationId: get-me
+      description: >-
+        Retrieves basic information about the Rippling user whose access token
+        you're using. This is generally used for the SSO flow.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode: []
+      tags:
+        - E. Current User
+  /groups:
+    get:
+      summary: GET Groups
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Group'
+              examples:
+                Success:
+                  value:
+                    - id: 5f397ed33ca04e4ab23246c2
+                      spokeId: 123456xvbnm12345678912354939
+                      name: GroupTest3
+                      users: []
+                      version: t4lz8cjhc54ludro
+                    - id: 5f397f3b3ca04e478d4575ad
+                      spokeId: lkjwbfskjsdbllskdb
+                      name: GroupTest4
+                      users:
+                        - 5c8f7f06c592917aeee1ea9f
+                      version: uu8ccavwbsb8stfn
+      operationId: get-groups
+      description: >-
+        Please note, the Groups endpoint requires an OAuth application (i.e.
+        approved 3rd party partners), as the end point is intended for mapping
+        third-party application “Groups” within Rippling organizations.
+
+
+        Lists the current third-party groups for an organization.
+      security:
+        - authorizationCode:
+            - 'group_members:read'
+            - 'groups:read'
+      tags:
+        - F. Groups
+    parameters: []
+    post:
+      summary: POST Groups
+      operationId: post-groups
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                Success:
+                  value:
+                    id: 5f397f3b3ca04e478d4575ad
+                    spokeId: lkjwbfskjsdbllskdb
+                    name: GroupTest4
+                    users:
+                      - 5c8f7f06c592917aeee1ea9f
+                    version: uu8ccavwbsb8stfn
+      description: >-
+        Creates a generic group, that can be associated within the third-party
+        application.
+      security:
+        - authorizationCode:
+            - 'groups:write'
+            - 'group_members:write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: User-readable name of the group.
+                spokeId:
+                  type: string
+                  description: >-
+                    The unique ID for the group, this can be the unique
+                    identifier for the group entity object within your
+                    application.
+                users:
+                  type: array
+                  description: An array of Rippling IDs that will be in the group.
+                  items:
+                    type: string
+            examples:
+              New Group:
+                value:
+                  name: GroupTest4
+                  spokeId: lkjwbfskjsdbllskdb
+                  users:
+                    - 5c8f7f06c592917aeee1ea9f
+        description: A group object.
+      tags:
+        - F. Groups
+  '/groups/{groupId}':
+    parameters:
+      - $ref: '#/components/parameters/groupId'
+    put:
+      summary: PUT Group
+      operationId: put-groups-groupId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                Success:
+                  value:
+                    id: 5f397f3b3ca04e478d4575ad
+                    spokeId: lkjwbfskjsdbllskdb
+                    name: GroupTest
+                    users: []
+                    version: yvmzhfw50hn39aas
+      description: >-
+        Please note, the Groups endpoint requires an OAuth application (i.e.
+        approved 3rd party partners), as the end point is intended for mapping
+        third-party application “Groups” within Rippling organizations.
+
+
+        Using the PUT method, all of the group fields will be updated, even if
+        the corresponding parameter is missing. If the PATCH method is used, and
+        a param is missing, its value won’t be changed.
+      security:
+        - authorizationCode:
+            - 'group_members:write'
+            - 'groups:write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdatePayload'
+            examples:
+              Sample:
+                value:
+                  name: GroupTest
+                  spokeId: lkjwbfskjsdbllskdb
+                  users:
+                    - ''
+                  version: uu8ccavwbsb8stfn
+        description: Group updates object.
+      tags:
+        - F. Groups
+    patch:
+      summary: PATCH Group
+      operationId: patch-groups-groupId
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Group'
+              examples:
+                Updated Group:
+                  value:
+                    id: 5f397f3b3ca04e478d4575ad
+                    spokeId: lkjwbfskjsdbllskdb
+                    name: GroupTest
+                    users: []
+                    version: yvmzhfw50hn39aas
+      description: >-
+        Please note, the Groups endpoint requires an OAuth application (i.e.
+        approved 3rd party partners), as the end point is intended for mapping
+        third-party application “Groups” within Rippling organizations.
+
+
+        Using the PUT method, all of the group fields will be updated, even if
+        the corresponding parameter is missing. If the PATCH method is used, and
+        a param is missing, its value won’t be changed.
+      security:
+        - authorizationCode:
+            - 'group_members:write'
+            - 'groups:write'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GroupUpdatePayload'
+            examples:
+              Sample:
+                value:
+                  name: GroupTest
+                  spokeId: lkjwbfskjsdbllskdb
+                  users: []
+                  version: yvmzhfw50hn39aas
+        description: Group updates object.
+      tags:
+        - F. Groups
+    delete:
+      summary: DELETE Group
+      operationId: delete-groups-groupId
+      responses:
+        '200':
+          description: OK
+      description: >-
+        Please note, the Groups endpoint requires an OAuth application (i.e.
+        approved 3rd party partners), as the end point is intended for mapping
+        third-party application “Groups” within Rippling organizations.
+
+
+        Deletes the specified group.
+      security:
+        - authorizationCode:
+            - 'groups:write'
+      tags:
+        - F. Groups
+  /leave_requests:
+    get:
+      summary: GET Leave Requests
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/LeaveRequest'
+              examples:
+                Success:
+                  value:
+                    - id: 5b998dfb40cae798a83e8874
+                      createdAt: '2018-08-12T15:06:51.681000-07:00'
+                      updatedAt: '2018-08-13T15:06:51.684000-07:00'
+                      role: 5ae0b2cb40cae73202bd66cc
+                      roleName: Jane Doe
+                      requestedBy: 5ae0b2cb40cae73202bd66cc
+                      requestedByName: Jane Doe
+                      status: APPROVED
+                      startDate: '2018-08-22'
+                      endDate: '2018-08-24'
+                      comments: null
+                      numHours: 20
+                      numMinutes: 1200
+                      leavePolicy: 5b998cf940cae798a83e87fd
+                      leaveType: VACATION
+                      policyDisplayName: Vacation
+                      processedAt: '2018-08-13T15:06:51.684000-07:00'
+                      processedBy: 5ae0b2cb40cae73202bd66cc
+                      processedByName: Funky Admin
+                      reasonForLeave: Visiting hometown for my brother’s wedding
+                      dates:
+                        - date: '2018-08-22'
+                          numMinutes: 480
+                        - date: '2018-08-23'
+                          numMinutes: 480
+                        - date: '2018-08-24'
+                          numMinutes: 240
+      operationId: get-leave_requests
+      description: >-
+        Retrieves the current leave requests.The query can be filtered by a
+        number of specific query parameters.
+      parameters:
+        - schema:
+            type: string
+          in: query
+          name: id
+        - schema:
+            type: string
+          in: query
+          name: role
+        - schema:
+            type: string
+          in: query
+          name: requestedBy
+        - schema:
+            type: string
+          in: query
+          name: status
+        - schema:
+            type: string
+          in: query
+          name: startDate
+          description: Start date of leave.
+        - schema:
+            type: string
+          in: query
+          name: endDate
+          description: End date of leave.
+        - schema:
+            type: string
+          in: query
+          name: leavePolicy
+        - schema:
+            type: string
+          in: query
+          name: processedBy
+        - schema:
+            type: string
+          in: query
+          name: from
+          description: >-
+            Filter to capture whether the leave request overlaps with a date
+            range.
+        - schema:
+            type: string
+          in: query
+          name: to
+          description: >-
+            Filter to capture whether the leave request overlaps with a date
+            range.
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:leave_requests'
+      tags:
+        - A. Companies
+  /saml/idp_metadata:
+    get:
+      summary: GET SAML Metadata
+      responses:
+        '200':
+          description: OK
+          content:
+            application/xml:
+              schema:
+                description: SAML Metadata returned in XML
+                type: string
+              examples:
+                Sample:
+                  value: >-
+                    <?xml version='1.0' encoding='UTF-8'?>
+
+                    <ns0:EntityDescriptor
+                    xmlns:ns0="urn:oasis:names:tc:SAML:2.0:metadata"
+                    xmlns:ns1="urn:oasis:names:tc:SAML:metadata:algsupport"
+                    xmlns:ns2="http://www.w3.org/2000/09/xmldsig#"
+                    entityID="https://www.rippling.com/5f381c24d22e3e099d41c727/idp.xml"
+                    validUntil="2030-06-26T03:30:26Z"><ns0:Extensions><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#md5"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#ripemd160"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#sha224"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#sha384"
+                    /><ns1:DigestMethod
+                    Algorithm="http://www.w3.org/2001/04/xmlenc#sha512"
+                    /><ns1:SigningMethod
+                    Algorithm="http,//www.w3.org/2000/09/xmldsig#dsa-sha1"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-md5"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-ripemd160"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha224"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha384"
+                    /><ns1:SigningMethod
+                    Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha512"
+                    /></ns0:Extensions><ns0:IDPSSODescriptor
+                    WantAuthnRequestsSigned="false"
+                    protocolSupportEnumeration="urn:oasis:names:tc:SAML:2.0:protocol"><ns0:KeyDescriptor
+                    use="signing"><ns2:KeyInfo><ns2:X509Data><ns2:X509Certificate>MIICZDCCAc0CBAE+aoEwDQYJKoZIhvcNAQELBQAweDELMAkGA1UEBhMCVVMxCzAJ
+
+                    BgNVBAgMAkNBMQswCQYDVQQHDAJTRjERMA8GA1UECgwIUmlwcGxpbmcxITAfBgNV
+
+                    BAsMGEFhbWlyIFByb2QgW1Rlc3RdIFBvcnRhbDEZMBcGA1UEAwwQd3d3LnJpcHBs
+
+                    aW5nLmNvbTAgFw0yMDA4MTcwMzMwMjRaGA8yMTIwMDcyNDAzMzAyNFoweDELMAkG
+
+                    A1UEBhMCVVMxCzAJBgNVBAgMAkNBMQswCQYDVQQHDAJTRjERMA8GA1UECgwIUmlw
+
+                    cGxpbmcxITAfBgNVBAsMGEFhbWlyIFByb2QgW1Rlc3RdIFBvcnRhbDEZMBcGA1UE
+
+                    AwwQd3d3LnJpcHBsaW5nLmNvbTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEA
+
+                    yNF48+Of3Lc4VsgcDi+trDYsC4zerzzbNtD7OaZibdUuTY77p2NILW2QW2A5Q2Nf
+
+                    eCahkWk3egyY0wm7eiczclzrM676uTpPyG/g7nJMfmdEFQf7uxh/OVMbXyD6e8No
+
+                    9ck8k1Antz28At761xmnXyl+mMcUDy6lTGFkK8/gnTUCAwEAATANBgkqhkiG9w0B
+
+                    AQsFAAOBgQAbO8K/SSkeMD9cPv6d2VWdF2TjuhVNgfiB74qnOc8NZ8OwfY7brd0+
+
+                    KFJAJ1nwXlBZuJ8OG0KnTranRWHMXTTckFUd4othNARFolC2m4OAmi7IrobMbtlH
+
+                    hDbqT2JWPqdOTv1GE72xQe0deh3WzFLp6saxqE5Xg9sVZ9KJACa2rA==
+
+                    </ns2:X509Certificate></ns2:X509Data></ns2:KeyInfo></ns0:KeyDescriptor><ns0:SingleSignOnService
+                    Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect"
+                    Location="https://www.rippling.com/api/platform/sso/sp-initiated/5f381c24d22e3e099d41c727"
+                    /><ns0:SingleSignOnService
+                    Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST"
+                    Location="https://www.rippling.com/api/platform/sso/sp-initiated/5f381c24d22e3e099d41c727"
+                    /></ns0:IDPSSODescriptor><ns0:Organization><ns0:OrganizationName
+                    xml:lang="en">Rippling</ns0:OrganizationName><ns0:OrganizationDisplayName
+                    xml:lang="en">Rippling</ns0:OrganizationDisplayName><ns0:OrganizationURL
+                    xml:lang="en">https:
+                    //www.rippling.com</ns0:OrganizationURL></ns0:Organization><ns0:ContactPerson
+                    contactType="support"><ns0:GivenName>Support</ns0:GivenName><ns0:EmailAddress>support@rippling.com</ns0:EmailAddress></ns0:ContactPerson></ns0:EntityDescriptor>
+      operationId: get-saml-idp_metadata
+      security:
+        - authorizationCode:
+            - 'saml:idp_metadata'
+      description: >-
+        Returns a SAML Idp metadata XML file for the current app integration. 
+        Note that this endpoint is only accessible using a token associated with
+        an app integration that has SAML enabled; otherwise it returns a 404
+        error.
+      tags:
+        - G. SAML
+  /ats_candidates/push_candidate:
+    post:
+      summary: POST New Candidate
+      operationId: post-ats_candidates-push_candidate
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Candidate'
+      description: >-
+        Pushes a candidate from an applicant tracking system directly into the
+        Rippling onboarding flow. Please note, this endpoint is only available
+        to applications integrating with OAuth2.0.
+      security:
+        - authorizationCode:
+            - 'ats:candidates'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Candidate'
+        description: ''
+      tags:
+        - H. ATS
+  /company_activity:
+    get:
+      summary: GET Company Activity
+      tags:
+        - A. Companies
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    nullable: true
+                    properties:
+                      events:
+                        type: array
+                        nullable: true
+                        items:
+                          $ref: '#/components/schemas/Event'
+                      next:
+                        type: string
+                  error:
+                    type: string
+                    nullable: true
+              examples:
+                Success:
+                  value:
+                    data:
+                      events:
+                        - id: 5ed7052182a6a429a4af3fb9
+                          request_data: null
+                          linked_events: []
+                          subjects:
+                            - instance: 5c6324b602bf9a760b7a4329
+                              type: GROUP
+                              display_name: Everyone
+                              icon: null
+                            - instance: 5c6324b502bf9a760b7a4318
+                              type: SPOKE_USER
+                              display_name: apps+test@rippling.com
+                              icon: null
+                            - instance: 5ca35d3b6ab9e20acc4e83e3
+                              type: ROLE
+                              display_name: Swag Test
+                              icon: null
+                          event_type: EXTERNAL_GROUP_MEMBER_REMOVE
+                          timestamp: '2020-06-02T19:04:17.375000-07:00'
+                          company: 595f75ffd2a5f80ae22ce88e
+                          spoke: 5c63187a3698be3692ce328f
+                          owner: 5c63232bc5929135ddadbfab
+                          initiator:
+                            type: EXTERNAL
+                            role: null
+                            display_name: External
+                            icon: null
+                          event_reason:
+                            reason: CHANGE_SYNCED_FROM_EXTERNAL_APP
+                            message: Activity emanated from External App
+                          name: Account removed from group
+                      next: 5f4d9d82f6c26e0a83aa6ea8
+                    error: null
+      operationId: get-company_activity
+      description: >
+        Retrieves the activity for a given company.
+
+
+        The most reliable method to ingest all activity from Rippling is to use
+        a pagination cursor via the 'next' parameter. This will ensure that
+        events are not skipped or duplicated due to the lack of timestamp
+        precision.
+
+
+        The most reliable method to ingest all activity from Rippling is to use
+        a pagination cursor via the next parameter. This will ensure that events
+        are not skipped or duplicated due to the lack of timestamp precision.
+
+
+        The general sequence of steps to leverage the next parameter:
+
+
+        1. Issue an initial request using startDate with a value set to some
+        date in the last 90 days
+
+        2. Retrieve the next page of events through the next value from the
+        response data.
+
+        3. Issue the paginated request
+
+        4. Retrieve the next page of events through the next value from the
+        response data
+
+        5. Pause and repeat the previous step
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - company
+            - 'company:activity'
+      parameters:
+        - schema:
+            type: string
+            format: date
+          in: query
+          name: startDate
+          description: >-
+            Timestamp to list activity after (inclusive). This should be less
+            than 90 days from now. Defaults to 90 days.
+        - schema:
+            type: string
+            format: date
+          in: query
+          name: endDate
+          description: Timestamp to list activity before (inclusive).
+        - schema:
+            type: string
+          in: query
+          name: next
+          description: Specifies the pagination cursor to the next page
+        - schema:
+            type: string
+          in: query
+          name: limit
+          description: >-
+            Specifies the number of results to page (maximum: 1000) (default:
+            1000)
+  '/leave_requests/{id}/process':
+    parameters:
+      - schema:
+          type: string
+        name: id
+        in: path
+        required: true
+        description: Unique identifier of the leave request being processed.
+    post:
+      summary: POST Process Leave Request
+      operationId: process-leave_requests
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LeaveRequest'
+              examples: {}
+      tags:
+        - A. Companies
+      security:
+        - Bearer ApiKey: []
+        - authorizationCode:
+            - 'company:leave_requests'
+      parameters:
+        - schema:
+            type: string
+            enum:
+              - approve
+              - decline
+          in: query
+          name: action
+          required: true
+          description: >-
+            The action to be taken on the leave request. Can be either approved
+            or declined.
+      description: >-
+        Approve or decline a leave request. Only pending requests can be
+        processed (approved / declined).
+  /mark_app_installed:
+    post:
+      summary: Mark App Installed
+      operationId: post-mark_app_installed
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                description: ''
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required:
+                  - ok
+      description: >-
+        This endpoint can be hit with an access token in order to mark you app
+        as installed, if you aren't hitting Rippling's other endpoints on
+        installation. The endpoint does not require any scopes.
+
+
+        Please note, hitting any other endpoint should mark your app as
+        installed as well.
+      security:
+        - authorizationCode: []
+      tags:
+        - I. Application Management
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      description: Sets a limit on the returned values
+      schema:
+        type: integer
+    offset:
+      name: offset
+      in: query
+      description: Offsets the returned values
+      schema:
+        type: integer
+    ein:
+      name: EIN
+      in: query
+      description: >-
+        Employer identification number, also known as the Federal Emplower
+        Identification Number or the Federal Tax Identification Number.
+      schema:
+        type: integer
+    employeeId:
+      name: employeeId
+      in: path
+      description: Unique identifier for the employee within Rippling.
+      schema:
+        type: integer
+      required: true
+    groupId:
+      name: groupId
+      in: path
+      description: Unique identifier for the group within Rippling.
+      schema:
+        type: integer
+      required: true
+  schemas:
+    Employee:
+      title: Employee
+      type: object
+      description: An employee model object.
+      x-tags:
+        - Models
+      properties:
+        id:
+          type: string
+          description: 'Unique Employee Identifier '
+        name:
+          type: string
+          description: Full name of the employee
+        firstName:
+          type: string
+          description: First name of the employee
+        lastName:
+          type: string
+          description: Last name of the employee
+        employmentType:
+          type: string
+          enum:
+            - CONTRACTOR
+            - SALARIED_FT
+            - SALARIED_PT
+            - HOURLY_FT
+            - HOURLY_PT
+            - TEMP
+          description: An ENUM of employment type
+        title:
+          type: string
+          description: The employee's work title
+        gender:
+          type: string
+          enum:
+            - MALE
+            - FEMALE
+            - null
+          description: The employee's gender
+        identifiedGender:
+          type: string
+          enum:
+            - MALE
+            - FEMALE
+            - NONBINARY
+            - null
+          description: The employee's identified gender
+        department:
+          type: string
+          description: The employee's department name
+        workLocation:
+          $ref: '#/components/schemas/Address'
+        spokeId:
+          type: string
+          nullable: true
+        endDate:
+          type: string
+          description: The employee's end date
+          nullable: true
+        roleState:
+          type: string
+          enum:
+            - INIT
+            - HIRED
+            - ACCEPTED
+            - ACTIVE
+            - TERMINATED
+          description: >-
+            The employee's role status - roleState meanings:
+
+
+            INIT: An initial record of an individual. An offer has not been made
+            and they have not started working at the company.
+
+
+            HIRED: An offer has been made but they have not accepted or started
+            yet.
+
+
+            ACCEPTED: An offer has been made and they have accepted, but they
+            have not started yet.
+
+
+            ACTIVE: The employee currently works at the company and their start
+            date is today or in the past.
+
+
+            TERMINATED: The employee is no longer active.
+        workEmail:
+          type: string
+          description: The employee's work email
+          nullable: true
+        manager:
+          type: string
+          description: >-
+            The unique identifier of the employee's manager. This value can be
+            null.
+        customFields:
+          $ref: '#/components/schemas/CustomFields'
+    WorkLocation:
+      title: WorkLocation
+      type: object
+      description: A work location object.
+      x-tags:
+        - Models
+      properties:
+        nickname:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+    Address:
+      title: Address
+      type: object
+      nullable: true
+      description: An address object as stored within Rippling.
+      x-tags:
+        - Models
+      properties:
+        city:
+          type: string
+        streetLine1:
+          type: string
+        zip:
+          type: string
+        country:
+          type: string
+        state:
+          type: string
+        streetLine2:
+          type: string
+    Group:
+      title: Group
+      type: object
+      x-tags:
+        - Models
+      x-examples:
+        Group:
+          id: 5f397f3b3ca04e478d4575ad
+          spokeId: lkjwbfskjsdbllskdb
+          name: GroupTest4
+          users:
+            - 5c8f7f06c592917aeee1ea9f
+          version: uu8ccavwbsb8stfn
+      properties:
+        name:
+          type: string
+          description: User-readable name of a Rippling group.
+        id:
+          type: string
+        spokeId:
+          type: string
+          nullable: true
+          description: Your id for the group; this should a unique string identifier.
+        version:
+          type: string
+          description: The version unique identifier of the group.
+        users:
+          type: array
+          description: An array of employee Rippling ids.
+          items:
+            type: string
+    Department:
+      title: Department
+      type: object
+      x-tags:
+        - Models
+      description: A company department object.
+      nullable: true
+      properties:
+        name:
+          type: string
+          description: Name of the department
+        parent:
+          type: string
+          description: 'Id of the parent department, if one exists'
+          default: 'null'
+          nullable: true
+    CustomFields:
+      title: CustomFields
+      type: object
+      description: A Custom Fields object within Rippling.
+      x-tags:
+        - Models
+      properties:
+        Id:
+          type: string
+          description: The identifier of the specific custom field.
+        type:
+          type: string
+          enum:
+            - TEXT
+            - DATE
+            - NUMBER
+            - CURRENCY
+            - PERCENTAGE
+            - SELECT
+            - FILE
+            - ID
+            - RADIO
+            - TEXTAREA
+          description: Denotes the type of the custom field.
+        title:
+          type: string
+          description: The title of the custom field.
+        required:
+          type: boolean
+          description: Denotes whether the custom field is or is not mandatory
+      x-examples:
+        Sample:
+          Id: string
+          type: TEXT
+          title: string
+          required: true
+    Company:
+      title: Company
+      type: object
+      description: A company object as represented within Rippling.
+      x-tags:
+        - Models
+      x-examples:
+        Sample:
+          id: 5ec5595afa9c4e1728118cb5
+          ein: null
+          address:
+            city: San Francisco
+            state: CA
+            country: US
+            zip: '94110'
+            streetLine1: 1234 21st Street
+          tax_info:
+            ein: null
+            entityType: null
+            incorporationDate: null
+            soleProprieterSSN: null
+            futaExempt: false
+            signatory:
+              id: 5ec5595dfa9c4e1728118d11
+              name: James Smith
+              firstName: James
+              lastName: Smith
+              dob: '2017-06-20'
+              ssn: '238726664'
+              phone: null
+              title: Director of Product
+              workEmail: cpitt+2@rippling.com
+              signableName: James Smith
+            nameWithIrs: null
+            incorporationState: null
+            entityName: Rippling_Integrations
+            dba: null
+            postalAddress: null
+          payroll_settings:
+            installState: ACTIVE
+            usStates:
+              - CA
+              - IL
+          workLocations:
+            - id: 5ec5595cfa9c4e1728118ce1
+              nickname: India
+              address:
+                city: Bangalore
+                state: Karnataka
+                country: IN
+                zip: '560048'
+                streetLine1: Prestige Shantiniketan
+            - id: 5ec5595cfa9c4e1728118ce9
+              nickname: San Francisco
+              address:
+                city: San Francisco
+                zip: '94110'
+                streetLine1: 1234 21st Street
+                country: US
+                state: CA
+                steLocationCode:
+                  cityCode: '277593'
+                  psdCode: ''
+                  schoolCode: ''
+                  countyCode: '075'
+                  stateCode: '06'
+                  municipalityCode: ''
+                  transitDistrictCode: ''
+                  locationCode: 06-075-277593
+            - id: 5ec5595cfa9c4e1728118cf1
+              nickname: Chicago
+              address:
+                city: Chicago
+                zip: '60606'
+                streetLine1: 233 S Wacker Dr
+                country: US
+                state: IL
+                steLocationCode:
+                  cityCode: '423587'
+                  psdCode: ''
+                  schoolCode: ''
+                  countyCode: '031'
+                  stateCode: '17'
+                  municipalityCode: ''
+                  transitDistrictCode: ''
+                  locationCode: 17-031-423587
+          subscription: null
+          primaryEmail: cpitt+2@rippling.com
+          phone: '4155555555'
+          name: Rippling_Integrations
+      properties:
+        id:
+          type: string
+        address:
+          $ref: '#/components/schemas/Address'
+        workLocations:
+          type: array
+          items:
+            $ref: '#/components/schemas/WorkLocation'
+        primaryEmail:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+    LeaveRequest:
+      title: LeaveRequest
+      type: object
+      description: Leave request object.
+      x-tags:
+        - Models
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the leave request.
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        role:
+          type: string
+          description: Unique identifier of the employee who is taking leave.
+        roleName:
+          type: string
+        requestedBy:
+          type: string
+        requestedByName:
+          type: string
+          description: >-
+            Unique identifier of the employee who made the request (in most
+            cases this is the same as role).
+        status:
+          type: string
+          enum:
+            - PENDING
+            - APPROVED
+            - REJECTED
+            - CANCELED
+        startDate:
+          type: string
+        endDate:
+          type: string
+        comments:
+          type: string
+          nullable: true
+        numHours:
+          type: integer
+          nullable: true
+        numMinutes:
+          type: integer
+          nullable: true
+        leavePolicy:
+          type: string
+        leaveType:
+          type: string
+          enum:
+            - VACATION
+            - SICK
+            - JURY_DUTY
+        policyDisplayName:
+          type: string
+        processedAt:
+          type: string
+        processedBy:
+          type: string
+          description: >-
+            Unique identifier of the employee who approved or rejected the
+            request. This may be null.
+        processedByName:
+          type: string
+        reasonForLeave:
+          type: string
+        dates:
+          type: array
+          items:
+            type: object
+            properties:
+              date:
+                type: string
+                format: date
+              numMinutes:
+                type: integer
+    Team:
+      title: Team
+      type: object
+      x-examples:
+        Team 1:
+          id: Team 1
+          name: 5da93c1fa4572b29a5511544
+          parent: 5da93c1fa4572b29a5511544
+      description: A team is a self-defined group of employees within Rippling.
+      x-tags:
+        - Models
+      properties:
+        id:
+          type: string
+          description: The identifier of the team.
+        name:
+          type: string
+          description: The name of the team.
+        parent:
+          type: string
+          nullable: true
+          description: The parent team (if this team is a subteam within a larger team).
+    Level:
+      title: Level
+      type: object
+      description: >-
+        Levels enable for self-defined,company-wide position levels, such as
+        Manager, Engineering Manager, Executive, etc.
+      x-tags:
+        - Models
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the level.
+        name:
+          type: string
+          description: Name of the level.
+        parent:
+          type: string
+          nullable: true
+          description: The unique identifier of the parent level.
+    Authenticated-User-(Me):
+      title: Authenticated-User-(Me)
+      type: object
+      description: >-
+        Information about the Rippling user whose token is being used to access
+        Rippling's API.
+      properties:
+        id:
+          type: string
+          description: Unied identifier of the user (likely an admin).
+        workEmail:
+          type: string
+          description: Work email of the user.
+        company:
+          type: string
+          description: Unique identifier of the company.
+      x-examples:
+        Success:
+          id: 5ec5595dfa9c4e1728118d11
+          workEmail: cpitt+2@rippling.com
+          company: 5ec5595afa9c4e1728118cb5
+      x-tags:
+        - Models
+    GroupUpdatePayload:
+      title: GroupUpdatePayload
+      type: object
+      description: This payload should be used when updating existing groups.
+      x-examples:
+        Group Update:
+          name: GroupTest
+          spokeId: lkjwbfskjsdbllskdb
+          users:
+            - ''
+          version: uu8ccavwbsb8stfn
+      x-tags:
+        - Models
+      properties:
+        name:
+          type: string
+          description: The name of the Group.
+        spokeId:
+          type: string
+          description: The external identifier of the Group.
+        users:
+          type: array
+          description: The array of users within the Group.
+          items: {}
+        version:
+          type: string
+          description: The version identifier of the Group.
+    Candidate:
+      title: Candidate
+      type: object
+      description: The Rippling candidate model.
+      properties:
+        name:
+          type: string
+          description: The candidate's name.
+        email:
+          type: string
+          description: The candidate's email.
+        phoneNumber:
+          type: string
+          description: The candidate's phone number.
+        jobTitle:
+          type: string
+          description: The candidate's job title.
+        candidateId:
+          type: string
+          description: The unique identifier of the candidate from the ATS.
+        startDate:
+          type: string
+          description: The would-be start date of the candidate.
+          format: date
+        department:
+          type: string
+          description: The department name as a string.
+        salaryUnit:
+          type: string
+          description: >-
+            An ENUM string value, denoting the frequency at which the candidate
+            should be paid once the role begins. Note, the PAY_PERIOD ENUM
+            implies the candidate is paid as per a custom pay period.
+          enum:
+            - HOUR
+            - DAY
+            - WEEK
+            - MONTH
+            - PAY_PERIOD
+        salaryPerUnit:
+          type: number
+          description: >-
+            The decimal value that the candidate gets paid every salaryUnit time
+            period.
+        signingBonus:
+          type: number
+          description: >-
+            The bonus cash given to the candidate as a part of a one time
+            payment, with two decimal digit precision.
+          format: double
+        equityShares:
+          type: integer
+          description: The number of shares that will be given to the candidate.
+        currency:
+          type: string
+          description: A string field of the ofifcial currency doe as listed in ISO 4217.
+        employmentType:
+          type: string
+          description: The ENUM type of employment the user will have within Rippling.
+          enum:
+            - CONTRACTOR
+            - SALARIED_PT
+            - SALARIED_FT
+            - HOURLY_FT
+            - HOURLY_PT
+            - TEMP
+        attachments:
+          type: array
+          items:
+            type: object
+            description: >-
+              An array of json objects containing file names and public file
+              URLs containing documents pertaining to the candidate.
+            properties:
+              file_name:
+                type: string
+                description: The file name.
+              file_url:
+                type: string
+                description: >-
+                  The public URL and name of a pdf/docx/doc/odt file containing
+                  documents pertaining to the candidate.
+      x-tags:
+        - Models
+    Event:
+      title: Event
+      type: object
+      description: |
+        The event model for company activity.
+
+        Please note, the event type can be one of the following:
+
+        - EXTERNAL_ACCONT_CREATE
+        - EXTERNAL_ACCOUNT_INVITE
+        - EXTERNAL_ACCOUNT_DELETE
+        - EXTERNAL_ACCOUNT_SUSPEND
+        - EXTERNAL_ACCOUNT_PASSWORD_RESET
+        - EXTERNAL_GROUP_ADD
+        - EXTERNAL_GROUP_REMOVE
+        - EXTERNAL_GROUP_MEMBER_REMOVE
+        - EXTERNAL_GROUP_MEMBER_ADD
+        - EXTERNAL_SSO_GRANT
+        - EXTERNAL_SSO_REVOKE
+        - EXTERNAL_SSO_SIGNIN
+        - RPASS_ITEM_SHARED
+        - RPASS_ITEM_UNSHARED
+        - RPASS_ITEM_USED
+        - USER_LOGIN_SUCCESS
+        - USER_LOGIN_FAILED
+        - ACCOUNT_PASSWORD_RESET
+        - ACCOUNT_PASSWORD_CHANGED
+        - TWO_FACTOR_DEVICE_RESET
+      properties:
+        id:
+          type: string
+          description: Unique identifier of the event.
+        request_data:
+          type: object
+          nullable: true
+          description: Geographic details from where the event was recorded.
+          properties:
+            ip:
+              type: string
+              description: Event IP addresss.
+            city:
+              type: string
+              description: City the event was triggered from.
+            country:
+              type: string
+              description: Country the event was triggered from.
+            latitude:
+              type: string
+              description: Latitude the event was triggered from.
+            longitude:
+              type: string
+              description: Longitude the event was triggered from.
+        linked_events:
+          type: array
+          description: An array of event identifiers that are linked to the event.
+          items:
+            type: string
+        subjects:
+          type: array
+          description: The list of objects of the event.
+          items:
+            type: object
+            nullable: true
+            properties:
+              instance:
+                type: string
+                description: Unique key for the event object.
+              type:
+                type: string
+                description: An ENUM value for the type of object.
+                enum:
+                  - ROLE
+                  - SPOKE
+                  - RPASS_ITEM
+                  - SPOKE_USER
+                  - GROUP
+              display_name:
+                type: string
+                description: Name used within Rippling.
+              icon:
+                type: string
+                nullable: true
+                description: Icon used within Rippling.
+        event_type:
+          type: string
+          description: An ENUM value for the type of the event.
+          enum:
+            - EXTERNAL_ACCOUNT_CREATE
+            - EXTERNAL_ACCOUNT_INVITE
+            - EXTERNAL_ACCOUNT_DELETE
+            - EXTERNAL_ACCOUNT_SUSPEND
+            - EXTERNAL_ACCOUNT_PASSWORD_RESET
+            - EXTERNAL_GROUP_ADD
+            - EXTERNAL_GROUP_REMOVE
+            - EXTERNAL_SSO_GRANT
+            - EXTERNAL_SSO_REVOKE
+            - EXTERNAL_SSO_SIGNIN
+            - RPASS_ITEM_SHARED
+            - RPASS_ITEM_UNSHARED
+            - RPASS_ITEM_USED
+            - USER_LOGIN_SUCCESS
+            - USER_LOGIN_FAILED
+            - ACCOUNT_PASSWORD_RESET
+            - ACCOUNT_PASSWORD_CHANGED
+            - TWO_FACTOR_DEVICE_RESET
+            - EXTERNAL_GROUP_MEMBER_REMOVE
+        timestamp:
+          type: string
+          description: Timestamp at which the event was recorded.
+        company:
+          type: string
+          description: Unique identifier for the company.
+        spoke:
+          type: string
+          nullable: true
+          description: >-
+            Unique identifier for the external application for which the event
+            was recorded. This will be Null for events that don't correspond to
+            an external appliction (e.g. Rippling system and RPass events).
+        initiator:
+          type: object
+          nullable: true
+          description: The actor of the event.
+          properties:
+            type:
+              type: string
+              description: ENUM value for the type of actor.
+              enum:
+                - ROLE
+                - SYSTEM
+                - EXTERNAL
+            role:
+              type: string
+              nullable: true
+              description: >-
+                A unique identifier for the employee that initiated the action,
+                if the type is ROLE.
+            display_name:
+              type: string
+              description: The name used within Rippling.
+            icon:
+              type: string
+              nullable: true
+              description: The icon used within Rippling.
+        event_reason:
+          type: object
+          nullable: true
+          description: 'Reason for the event, tied to the type of eveent.'
+          properties:
+            reason:
+              type: string
+              description: Reason for the event.
+            message:
+              type: string
+              description: Message of the event.
+        name:
+          type: string
+          description: 'Display name for the event, tied to the type of event.'
+      x-tags:
+        - Models
+  securitySchemes:
+    Bearer ApiKey:
+      type: apiKey
+      in: header
+      name: Authorization
+      description: >-
+        If you are using Rippling's API to access endpoints on behalf of your
+        own company, please use your API key. Your API key can be retrieved from
+        the Company Settings page on Rippling.
+    authorizationCode:
+      type: oauth2
+      flows:
+        authorizationCode:
+          tokenUrl: 'https://app.rippling.com/api/o/token/'
+          scopes:
+            company: >-
+              The parent company scope. This is a prequisite to additional
+              company:* scopes, but does not serve as a scope superset. 
+            employee: >-
+              The parent employee scope. This is a prerequisite to additional
+              employee:* scopes, but does not serve as a scope superset. 
+            'company:activity': Permission to access information regarding the company's activity.
+            'company:address': Permission to access the company's address.
+            'company:phone': Permission to access the company's phone information.
+            'company:departments': Permission to access the company's departments.
+            'company:levels': Permission to access the company's levels.
+            'company:customFields': Permission to access the company's custom fields.
+            'company:workLocations': Permission to access the company's work locations.
+            'company:leave_requests': Permission to access the company's leave request information.
+            'admin:name': Permission to access the company's admins' names.
+            'admin:personalEmail': Permission to access the company's admins' personal emails.
+            'admin:phone': Permission to access the company's admins' phone number.
+            'admin:workEmail': Permission to access the company's admins' work emails.
+            'admin:roleState': Permission to access the company's admins' role states.
+            'admin:department': Permission to access the company's admins' departments.
+            'admin:workLocation': Permission to access the company's admins' work location.
+            'employee:name': Permission to access the company's employees' names.
+            'employee:employmentType': Permission to access the company's employees' employment types.
+            'employee:workEmail': Permission to access the company's employees' work emails.
+            'employee:title': Permission to access the company's employees' titles.
+            'employee:endDate': Permission to access the company's employees' end dates.
+            'employee:roleState': Permission to access the company's employees' role states.
+            'employee:department': Permission to access the company's employees' department.
+            'employee:level': Permission to access the company's employees' levels.
+            'employee:manager': Permission to access the company's employees' managers.
+            'employee:workLocation': Permission to access the company's employees' work locations.
+            'employee:customFields': >-
+              Permission to access the company's employees' custom field
+              information.
+            'employee:gender': Permission to access the company's employees' gender information.
+            'employee:identifiedGender': >-
+              Permission to access the company's employees' identified gender
+              information.
+            'groups:read': Permission to access the company's group information.
+            'groups:write': Permission to access to the company's group information.
+            'group_members:read': Permission to read the company's group membership information.
+            'group_members:write': Permission to write to the company's group membership information.
+            'saml:idp_metadata': >-
+              Permission to read the current company's SAML metadata
+              information.
+            'ats:candidates': Permission to push ATS candidates to Rippling for onboarding.
+            'company:teams': Permission to access the company's list of teams.
+            'company:*': >-
+              This scope signifies that many company scopes are applicable to
+              this endpoint. Please review the scopes documentation to view the
+              currently supported scopes.
+            'employee:*': >-
+              This scope signifies that many employee scopes are applicable to
+              this endpoint. Please review the scopes documentation to view the
+              currently supported scopes.
+          authorizationUrl: 'https://app.rippling/apps/PLATFORM/{AppName}'
+          refreshUrl: 'https://app.rippling.com/api/o/token/'
+      description: >-
+        If you've deployed an application on Rippling (or wish to deploy an
+        official application) for customers to use, you will need to use
+        OAuth2.0 to retrieve access tokens for companies that install and
+        authorize your application to access data on their behalf.
+security:
+  - Authorization Code: []
+  - authorizationCode: []
