@@ -108,10 +108,10 @@ paths:
                     phone: string
                     name: string
       parameters: []
-      security:
-        - authorizationCode:
-            - company
-            - 'company:*'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:*'
       tags:
         - A. Companies
     parameters: []
@@ -137,10 +137,10 @@ paths:
                       parent: 5ec5595ffa9c4e1728118d6f
       operationId: get-departments
       description: Returns a list of departments for the specified company.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:departments'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:departments'
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -188,9 +188,9 @@ paths:
                         title: string
                         required: true
       operationId: get-employees
-      security:
-        - authorizationCode:
-            - employee
+#      security:
+#        - authorizationCode:
+#            - employee
       description: >-
         Retrieves the list of active employees. The fields retrieved depend on
         the employee scopes that you have access to for your access token or API
@@ -226,10 +226,10 @@ paths:
                         streetLine2: string
       operationId: get-work_locations
       description: Returns the list of work locations for a given company.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:workLocations'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:workLocations'
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -307,12 +307,12 @@ paths:
                       title: additional variable
                       caption: null
                       required: true
-      operationId: get-custom_fields
+#      operationId: get-custom_fields
       description: Returns the custom fields for the given company.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:customFields'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:customFields'
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -347,10 +347,10 @@ paths:
                       parent: null
       operationId: get-teams
       description: Retrieves the list of teams for the company.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:teams'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:teams'
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -384,10 +384,10 @@ paths:
       description: >-
         Retrieves the levels for the company. Levels are set positions for an
         organization, such as Manager, or Executive.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:levels'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:levels'
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -440,9 +440,9 @@ paths:
       description: >-
         Retrieves the information for a single employee based on the scopes that
         your API key or access token have access to.
-      security:
-        - authorizationCode:
-            - employee
+#      security:
+#        - authorizationCode:
+#            - employee
       tags:
         - B. Employees
   /employees/include_terminated:
@@ -490,9 +490,9 @@ paths:
       description: >-
         Similar to the active employees endpoint, but this endpoint includes
         both active and terminated employees.
-      security:
-        - authorizationCode:
-            - employee
+#      security:
+#        - authorizationCode:
+#            - employee
       parameters:
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/offset'
@@ -519,8 +519,8 @@ paths:
       description: >-
         Retrieves basic information about the Rippling user whose access token
         you're using. This is generally used for the SSO flow.
-      security:
-        - authorizationCode: []
+#      security:
+#        - authorizationCode: []
       tags:
         - E. Current User
   /groups:
@@ -557,10 +557,10 @@ paths:
 
 
         Lists the current third-party groups for an organization.
-      security:
-        - authorizationCode:
-            - 'group_members:read'
-            - 'groups:read'
+#      security:
+#        - authorizationCode:
+#            - 'group_members:read'
+#            - 'groups:read'
       tags:
         - F. Groups
     parameters: []
@@ -586,10 +586,10 @@ paths:
       description: >-
         Creates a generic group, that can be associated within the third-party
         application.
-      security:
-        - authorizationCode:
-            - 'groups:write'
-            - 'group_members:write'
+#      security:
+#        - authorizationCode:
+#            - 'groups:write'
+#            - 'group_members:write'
       requestBody:
         content:
           application/json:
@@ -650,10 +650,10 @@ paths:
         Using the PUT method, all of the group fields will be updated, even if
         the corresponding parameter is missing. If the PATCH method is used, and
         a param is missing, its value won’t be changed.
-      security:
-        - authorizationCode:
-            - 'group_members:write'
-            - 'groups:write'
+#      security:
+#        - authorizationCode:
+#            - 'group_members:write'
+#            - 'groups:write'
       requestBody:
         content:
           application/json:
@@ -697,10 +697,10 @@ paths:
         Using the PUT method, all of the group fields will be updated, even if
         the corresponding parameter is missing. If the PATCH method is used, and
         a param is missing, its value won’t be changed.
-      security:
-        - authorizationCode:
-            - 'group_members:write'
-            - 'groups:write'
+#      security:
+#        - authorizationCode:
+#            - 'group_members:write'
+#            - 'groups:write'
       requestBody:
         content:
           application/json:
@@ -729,9 +729,9 @@ paths:
 
 
         Deletes the specified group.
-      security:
-        - authorizationCode:
-            - 'groups:write'
+#      security:
+#        - authorizationCode:
+#            - 'groups:write'
       tags:
         - F. Groups
   /leave_requests:
@@ -829,10 +829,10 @@ paths:
           description: >-
             Filter to capture whether the leave request overlaps with a date
             range.
-      security:
-        - authorizationCode:
-            - company
-            - 'company:leave_requests'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:leave_requests'
       tags:
         - A. Companies
   /saml/idp_metadata:
@@ -928,9 +928,9 @@ paths:
                     //www.rippling.com</ns0:OrganizationURL></ns0:Organization><ns0:ContactPerson
                     contactType="support"><ns0:GivenName>Support</ns0:GivenName><ns0:EmailAddress>support@rippling.com</ns0:EmailAddress></ns0:ContactPerson></ns0:EntityDescriptor>
       operationId: get-saml-idp_metadata
-      security:
-        - authorizationCode:
-            - 'saml:idp_metadata'
+#      security:
+#        - authorizationCode:
+#            - 'saml:idp_metadata'
       description: >-
         Returns a SAML Idp metadata XML file for the current app integration. 
         Note that this endpoint is only accessible using a token associated with
@@ -953,9 +953,9 @@ paths:
         Pushes a candidate from an applicant tracking system directly into the
         Rippling onboarding flow. Please note, this endpoint is only available
         to applications integrating with OAuth2.0.
-      security:
-        - authorizationCode:
-            - 'ats:candidates'
+#      security:
+#        - authorizationCode:
+#            - 'ats:candidates'
       requestBody:
         content:
           application/json:
@@ -1059,10 +1059,10 @@ paths:
         response data
 
         5. Pause and repeat the previous step
-      security:
-        - authorizationCode:
-            - company
-            - 'company:activity'
+#      security:
+#        - authorizationCode:
+#            - company
+#            - 'company:activity'
       parameters:
         - schema:
             type: string
@@ -1111,9 +1111,9 @@ paths:
               examples: {}
       tags:
         - A. Companies
-      security:
-        - authorizationCode:
-            - 'company:leave_requests'
+#      security:
+#        - authorizationCode:
+#            - 'company:leave_requests'
       parameters:
         - schema:
             type: string
@@ -1154,8 +1154,8 @@ paths:
 
         Please note, hitting any other endpoint should mark your app as
         installed as well.
-      security:
-        - authorizationCode: []
+#      security:
+#        - authorizationCode: []
       tags:
         - I. Application Management
 components:
@@ -2002,6 +2002,6 @@ components:
         official application) for customers to use, you will need to use
         OAuth2.0 to retrieve access tokens for companies that install and
         authorize your application to access data on their behalf.
-security:
-  - Authorization Code: []
-  - authorizationCode: []
+#security:
+#  - Authorization Code: []
+#  - authorizationCode: []
